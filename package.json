@@ -1,6 +1,6 @@
 {
   "name": "http-knocking",
-  "version": "0.1.0-SNAPSHOT",
+  "version": "0.1.0",
   "description": "HTTP knocking lik port knocking",
   "main": "main.js",
   "scripts": {
