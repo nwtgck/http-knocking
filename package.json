@@ -1,0 +1,14 @@
+{
+  "name": "http-knocking",
+  "version": "0.1.0-SNAPSHOT",
+  "description": "HTTP knocking lik port knocking",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ryo Ota <nwtgck@gmail.com> (https://github.com/nwtgck)",
+  "license": "MIT",
+  "dependencies": {
+    "http-proxy": "^1.17.0"
+  }
+}
