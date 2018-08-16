@@ -7,8 +7,8 @@ COPY . /app
 # Move to /app
 WORKDIR /app
 
-# Install requirements
-RUN npm install
+# Install requirements and build
+RUN npm install && npm run build
 
 # Run entry (Run the server)
-ENTRYPOINT ["node", "main.js"]
+ENTRYPOINT ["node", "dist/main.js"]

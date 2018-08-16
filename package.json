@@ -4,11 +4,18 @@
   "description": "HTTP knocking lik port knocking",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "npm build && node dist/main.js"
   },
   "author": "Ryo Ota <nwtgck@gmail.com> (https://github.com/nwtgck)",
   "license": "MIT",
   "dependencies": {
     "http-proxy": "^1.17.0"
+  },
+  "devDependencies": {
+    "@types/http-proxy": "^1.16.2",
+    "@types/node": "^10.7.1",
+    "typescript": "^3.0.1"
   }
 }
