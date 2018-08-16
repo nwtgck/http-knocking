@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+      "module": "commonjs",
+      "noImplicitAny": true,
+      "removeComments": true,
+      "preserveConstEnums": true,
+      "sourceMap": true,
+      "outDir": "dist"
+  },
+  "include": [
+      "**/*"
+  ],
+  "exclude": [
+      "node_modules/*"
+  ]
+}
