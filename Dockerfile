@@ -11,4 +11,4 @@ WORKDIR /app
 RUN npm install && npm run build
 
 # Run entry (Run the server)
-ENTRYPOINT ["node", "dist/main.js"]
+ENTRYPOINT ["node", "dist/src/main.js"]
