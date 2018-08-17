@@ -40,6 +40,11 @@ try {
   server.listen(port);
   console.log(`Server is listening on ${port}...`);
 
+  // Catch and ignore error
+  process.on('uncaughtException', (err) => {
+    console.error(err);
+  })
+
 } catch (err) {
   console.error(err);
 }
