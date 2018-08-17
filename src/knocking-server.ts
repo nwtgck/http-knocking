@@ -22,7 +22,9 @@ export function createKnockingServer(targetUrl: string, openKnockingSeq: string[
   // HTTP Reverse Proxy Server
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     // Get path name
-    const pathName = url.parse(req.url).pathname;
+    const pathName = url.parse(req.url).pathname
+      // Remove last "/"
+      .replace(/\/$/, "");
     console.log(pathName);
 
     // If server is available
