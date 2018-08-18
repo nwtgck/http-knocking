@@ -44,14 +44,17 @@ Here is available options.
 
 ```
 Options:
-  --help               Show help                                       [boolean]
-  --version            Show version number                             [boolean]
-  --port               Port of knocking server                        [required]
-  --target-url         Target URL to hide                             [required]
-  --open-knocking      Open-knocking sequence (e.g. "/alpha,/foxtrot,/lima")
-                                                                      [required]
-  --close-knocking     Close-knocking sequence (e.g. "/victor,/kilo")
-  --auto-close-millis  Time millis to close automatically
+  --help                               Show help                       [boolean]
+  --version                            Show version number             [boolean]
+  --port                               Port of knocking server        [required]
+  --target-url                         Target URL to hide             [required]
+  --open-knocking                      Open-knocking sequence (e.g.
+                                       "/alpha,/foxtrot,/lima")       [required]
+  --close-knocking                     Close-knocking sequence (e.g.
+                                       "/victor,/kilo")
+  --auto-close-millis                  Time millis to close automatically
+  --open-knocking-max-interval-millis  Time millis to reset open procedure
 ```
 
- `--auto-close-millis` option makes your server more secure because it closes automatically by time.
+ `--auto-close-millis` option makes your server more secure because it closes automatically by time.  
+ `--open-knocking-max-interval-millis` option also makes your server more secure because it reset open procedure by time.
