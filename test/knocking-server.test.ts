@@ -31,7 +31,7 @@ describe("knockingServer", ()=>{
     });
 
 
-    it("should close by default", async ()=>{
+    it("should be closed by default", async ()=>{
       const knockingPort: number = 6677;
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
@@ -44,7 +44,12 @@ describe("knockingServer", ()=>{
       );
       await server.listen(knockingPort);
 
-      const res = await thenRequest("GET", knockingUrl);
+      let res;
+      res = await thenRequest("GET", `${knockingUrl}/`);
+      assert.equal(res.statusCode,200);
+      assert.equal(res.getBody("UTF-8"), "");
+
+      res = await thenRequest("GET", `${knockingUrl}/about`);
       assert.equal(res.statusCode,200);
       assert.equal(res.getBody("UTF-8"), "");
 
@@ -138,11 +143,11 @@ describe("knockingServer", ()=>{
         // Check whether the server is closed
         res = await thenRequest("GET", `${knockingUrl}/`);
         assert.equal(res.statusCode,200);
-        assert.notEqual(res.getBody("UTF-8"), "This is top page!\n");
+        assert.equal(res.getBody("UTF-8"), "");
 
         res = await thenRequest("GET", `${knockingUrl}/about`);
         assert.equal(res.statusCode,200);
-        assert.notEqual(res.getBody("UTF-8"), "This is about page\n");
+        assert.equal(res.getBody("UTF-8"), "");
       } finally {
         await server.close();
       }
