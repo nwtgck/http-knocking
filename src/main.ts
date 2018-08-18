@@ -5,19 +5,24 @@ import * as knockingServer from './knocking-server'
 // Create option parser
 const parser = yargs
   .option("port", {
+    describe: 'Port of knocking server',
     demandOption: true
   })
   .option("target-url", {
+    describe: 'Target URL to hide',
     demandOption: true
   })
   .option("open-knocking", {
+    describe: 'Open-knocking sequence (e.g. "/alpha,/foxtrot,/lima")',
     demandOption: true
   })
   .option("close-knocking", {
+    describe: 'Close-knocking sequence (e.g. "/victor,/kilo")',
     demandOption: false
   })
   .option("auto-close-millis", {
-    demandOption: false
+    describe: 'Time millis to close automatically',
+    demandOption: false,
   });
 
 try {
