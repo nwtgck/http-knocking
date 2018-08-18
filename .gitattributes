@@ -1,0 +1,2 @@
+# main.ts has a shebang, "#!/usr/bin/env node", so it is regarded as JS
+src/main.ts linguist-language=TypeScript
