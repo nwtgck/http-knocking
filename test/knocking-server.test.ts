@@ -91,6 +91,63 @@ describe("knockingServer", ()=>{
       }
     });
 
+    it("should close by close-knocking sequence", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      const server = knockingServer.createKnockingServer(
+        `http://localhost:${targetServerPort}`,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true
+      );
+      await server.listen(knockingPort);
+
+
+      try {
+        // Open the server by knocking
+        await thenRequest("GET", `${knockingUrl}/82`);
+        await thenRequest("GET", `${knockingUrl}/delta`);
+        await thenRequest("GET", `${knockingUrl}/echo`);
+
+        let res;
+        // Check whether the server is open
+        res = await thenRequest("GET", `${knockingUrl}/`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "This is top page!\n");
+
+
+        res = await thenRequest("GET", `${knockingUrl}/alpha`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/one`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/one`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/three`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "Closed\n");
+
+
+        // Check whether the server is closed
+        res = await thenRequest("GET", `${knockingUrl}/`);
+        assert.equal(res.statusCode,200);
+        assert.notEqual(res.getBody("UTF-8"), "This is top page!\n");
+
+        res = await thenRequest("GET", `${knockingUrl}/about`);
+        assert.equal(res.statusCode,200);
+        assert.notEqual(res.getBody("UTF-8"), "This is about page\n");
+      } finally {
+        await server.close();
+      }
+    });
+
   });
 
 });
