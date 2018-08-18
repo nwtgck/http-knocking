@@ -8,9 +8,10 @@ import * as url from "url";
  * @param {string[]} openKnockingSeq
  * @param {string[]} closeKnockingSeq
  * @param {number | undefined} autoCloseMillis
+ * @param {number | undefined} openKnockingMaxIntervalMillis
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetUrl: string | url.URL, openKnockingSeq: string[], closeKnockingSeq: string[], autoCloseMillis: number | undefined = undefined, quiet: boolean = false) {
+export function createKnockingServer(targetUrl: string | url.URL, openKnockingSeq: string[], closeKnockingSeq: string[], autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, quiet: boolean = false) {
   // Create proxy instance
   const proxy = httpProxy.createServer();
 
@@ -20,11 +21,28 @@ export function createKnockingServer(targetUrl: string | url.URL, openKnockingSe
   let openKnockingIdx: number = 0;
   // Knocking index for close
   let closeKnockingIdx: number = 0;
+  // timeout ID for openKnockingMaxIntervalMillis
+  let openKnockingMaxIntervalTimeoutId: NodeJS.Timer | undefined = undefined;
 
   // Set open/close indexes
   function resetIdxs(){
     openKnockingIdx  = 0;
     closeKnockingIdx = 0;
+  }
+
+  // Close by millis if millis are defined
+  function closeByMillisIfDefined(millis: number | undefined): NodeJS.Timer | undefined {
+    if(millis === undefined) {
+      return undefined;
+    } else {
+      // Close the server in millis
+      return setTimeout(() => {
+        // Close
+        isOpen = false;
+        // Set open/close indexes
+        resetIdxs();
+      }, millis);
+    }
   }
 
   // HTTP Reverse Proxy Server
@@ -56,25 +74,26 @@ export function createKnockingServer(targetUrl: string | url.URL, openKnockingSe
         proxy.web(req, res, {target: targetUrl});
       }
     } else if (pathName === openKnockingSeq[openKnockingIdx]) {
+      if(openKnockingMaxIntervalTimeoutId !== undefined) {
+        // Cancel timeout for openKnockingMaxInterval
+        clearTimeout(openKnockingMaxIntervalTimeoutId);
+      }
       // Proceed open knocking
       openKnockingIdx++;
       if (openKnockingIdx === openKnockingSeq.length) {
+        // Clear openKnockingMaxIntervalTimeoutId
+        openKnockingMaxIntervalTimeoutId = undefined;
         // Open the server
         isOpen = true;
         // Set open/close indexes
         resetIdxs();
-
-        if(autoCloseMillis !== undefined) {
-          // Close the server in autoCloseMillis
-          setTimeout(() => {
-            // Close
-            isOpen = false;
-            // Set open/close indexes
-            resetIdxs();
-          }, autoCloseMillis);
-        }
+        // Close by closeByMillisIfDefined if it is defined
+        closeByMillisIfDefined(autoCloseMillis);
 
         res.write("Open\n");
+      } else {
+        // Close by openKnockingMaxIntervalMillis if it is defined
+        openKnockingMaxIntervalTimeoutId = closeByMillisIfDefined(openKnockingMaxIntervalMillis);
       }
       res.end();
     } else {

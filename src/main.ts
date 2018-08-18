@@ -23,6 +23,10 @@ const parser = yargs
   .option("auto-close-millis", {
     describe: 'Time millis to close automatically',
     demandOption: false,
+  })
+  .option("open-knocking-max-interval-millis", {
+    describe: 'Time millis to reset open procedure',
+    demandOption: false,
   });
 
 try {
@@ -39,13 +43,16 @@ try {
   const closeKnockingSeq: string[] = args['close-knocking'] === undefined ? openKnockingSeq.slice().reverse() : args['close-knocking'].split(",");
   // Get auto-close millis
   const autoCloseMillis: number | undefined = args['auto-close-millis'];
+  // Get open-knocking max interval mills
+  const openKnockingMaxIntervalMillis: number | undefined = args['open-knocking-max-interval-millis'];
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
     targetUrl,
     openKnockingSeq,
     closeKnockingSeq,
-    autoCloseMillis
+    autoCloseMillis,
+    openKnockingMaxIntervalMillis
   );
 
   server.listen(port);
