@@ -15,6 +15,9 @@ const parser = yargs
   })
   .option("close-knocking", {
     demandOption: false
+  })
+  .option("auto-close-millis", {
+    demandOption: false
   });
 
 try {
@@ -29,12 +32,15 @@ try {
   const openKnockingSeq: string[]  = args['open-knocking'].split(",");
   // Get close knocking sequence
   const closeKnockingSeq: string[] = args['close-knocking'] === undefined ? openKnockingSeq.slice().reverse() : args['close-knocking'].split(",");
+  // Get auto-close millis
+  const autoCloseMillis: number | undefined = args['auto-close-millis'];
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
     targetUrl,
     openKnockingSeq,
-    closeKnockingSeq
+    closeKnockingSeq,
+    autoCloseMillis
   );
 
   server.listen(port);
