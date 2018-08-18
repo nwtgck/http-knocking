@@ -1,7 +1,8 @@
 # http-knocking
 [![Build Status](https://travis-ci.com/nwtgck/http-knocking.svg?branch=develop)](https://travis-ci.com/nwtgck/http-knocking) [![Docker Automated build](https://img.shields.io/docker/automated/nwtgck/http-knocking.svg)](https://hub.docker.com/r/nwtgck/http-knocking/) [![](https://images.microbadger.com/badges/image/nwtgck/http-knocking.svg)](https://microbadger.com/images/nwtgck/http-knocking "Get your own image badge on microbadger.com")
 
-HTTP knocking like port knocking
+HTTP knocking is like port knocking. It hides your server, and allows you to open/close the server by certain knocking.   
+In HTTPS communication, knocking is hidden because of encryption unlike port knocking.
 
 ![demo1](demo_images/demo1.gif)
 
@@ -36,3 +37,21 @@ services:
     expose:
       - "2368"
 ```
+
+## Options
+
+Here is available options.
+
+```
+Options:
+  --help               Show help                                       [boolean]
+  --version            Show version number                             [boolean]
+  --port               Port of knocking server                        [required]
+  --target-url         Target URL to hide                             [required]
+  --open-knocking      Open-knocking sequence (e.g. "/alpha,/foxtrot,/lima")
+                                                                      [required]
+  --close-knocking     Close-knocking sequence (e.g. "/victor,/kilo")
+  --auto-close-millis  Time millis to close automatically
+```
+
+ `--auto-close-millis` option makes your server more secure because it closes automatically by time.
