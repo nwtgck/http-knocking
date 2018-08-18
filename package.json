@@ -4,7 +4,7 @@
   "description": "HTTP knocking lik port knocking",
   "main": "main.js",
   "scripts": {
-    "test": "npm run build && mocha dist/test/*test.js",
+    "test": "npm run build && mocha --timeout 10000 dist/test/*test.js",
     "build": "tsc",
     "start": "npm run build && node dist/src/main.js"
   },
