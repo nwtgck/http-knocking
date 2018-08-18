@@ -8,7 +8,7 @@ import * as url from "url";
  * @param {string[]} openKnockingSeq
  * @param {string[]} closeKnockingSeq
  */
-export function createKnockingServer(targetUrl: string, openKnockingSeq: string[], closeKnockingSeq: string[]) {
+export function createKnockingServer(targetUrl: string, openKnockingSeq: string[], closeKnockingSeq: string[], quiet: boolean = false) {
   // Create proxy instance
   const proxy = httpProxy.createServer();
 
@@ -25,7 +25,10 @@ export function createKnockingServer(targetUrl: string, openKnockingSeq: string[
     const pathName = url.parse(req.url).pathname
       // Remove last "/"
       .replace(/\/$/, "");
-    console.log(pathName);
+    if(!quiet) {
+      // Print path name
+      console.log(pathName);
+    }
 
     // If server is available
     if (isOpen) {
