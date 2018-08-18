@@ -7,9 +7,10 @@ import * as url from "url";
  * @param {string | url.URL} targetUrl
  * @param {string[]} openKnockingSeq
  * @param {string[]} closeKnockingSeq
+ * @param {number | undefined} autoCloseMillis
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetUrl: string | url.URL, openKnockingSeq: string[], closeKnockingSeq: string[], quiet: boolean = false) {
+export function createKnockingServer(targetUrl: string | url.URL, openKnockingSeq: string[], closeKnockingSeq: string[], autoCloseMillis: number | undefined = undefined, quiet: boolean = false) {
   // Create proxy instance
   const proxy = httpProxy.createServer();
 
@@ -19,6 +20,12 @@ export function createKnockingServer(targetUrl: string | url.URL, openKnockingSe
   let openKnockingIdx: number = 0;
   // Knocking index for close
   let closeKnockingIdx: number = 0;
+
+  // Set open/close indexes
+  function resetIdxs(){
+    openKnockingIdx  = 0;
+    closeKnockingIdx = 0;
+  }
 
   // HTTP Reverse Proxy Server
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
@@ -39,8 +46,8 @@ export function createKnockingServer(targetUrl: string | url.URL, openKnockingSe
         if (closeKnockingIdx === closeKnockingSeq.length) {
           // Close the server
           isOpen = false;
-          // Reset close knocking sequence
-          closeKnockingIdx = 0;
+          // Set open/close indexes
+          resetIdxs();
           res.write("Closed\n");
         }
         res.end();
@@ -54,8 +61,19 @@ export function createKnockingServer(targetUrl: string | url.URL, openKnockingSe
       if (openKnockingIdx === openKnockingSeq.length) {
         // Open the server
         isOpen = true;
-        // Reset open knocking sequend
-        openKnockingIdx = 0;
+        // Set open/close indexes
+        resetIdxs();
+
+        if(autoCloseMillis !== undefined) {
+          // Close the server in autoCloseMillis
+          setTimeout(() => {
+            // Close
+            isOpen = false;
+            // Set open/close indexes
+            resetIdxs();
+          }, autoCloseMillis);
+        }
+
         res.write("Open\n");
       }
       res.end();
