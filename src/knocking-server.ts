@@ -4,11 +4,12 @@ import * as url from "url";
 
 /**
  * Run the knocking
- * @param {string} targetUrl
+ * @param {string | url.URL} targetUrl
  * @param {string[]} openKnockingSeq
  * @param {string[]} closeKnockingSeq
+ * @param {boolean} quiet
  */
-export function createKnockingServer(targetUrl: string, openKnockingSeq: string[], closeKnockingSeq: string[], quiet: boolean = false) {
+export function createKnockingServer(targetUrl: string | url.URL, openKnockingSeq: string[], closeKnockingSeq: string[], quiet: boolean = false) {
   // Create proxy instance
   const proxy = httpProxy.createServer();
 
