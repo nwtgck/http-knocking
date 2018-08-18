@@ -1,3 +1,8 @@
+#!/usr/bin/env node
+
+// "env node" is for executable
+// (from: https://qiita.com/takayukioda/items/a149bc2907ef77121229)
+
 import * as process   from 'process';
 import * as yargs     from 'yargs';
 import * as knockingServer from './knocking-server'

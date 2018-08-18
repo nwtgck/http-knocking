@@ -1,12 +1,17 @@
 {
   "name": "http-knocking",
-  "version": "0.1.0",
-  "description": "HTTP knocking lik port knocking",
-  "main": "main.js",
+  "version": "0.2.0-SNAPSHOT3",
+  "description": "HTTP knocking like port knocking",
+  "bin": {
+    "http-knocking": "dist/src/main.js"
+  },
+  "main": "dist/src/main.js",
+  "types": "dist/src/main.d.ts",
   "scripts": {
     "test": "npm run build && mocha --timeout 10000 dist/test/*test.js",
     "build": "tsc",
-    "start": "npm run build && node dist/src/main.js"
+    "start": "npm run build && node dist/src/main.js",
+    "prepublish": "npm run build"
   },
   "author": "Ryo Ota <nwtgck@gmail.com> (https://github.com/nwtgck)",
   "license": "MIT",
