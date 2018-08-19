@@ -13,8 +13,12 @@ const parser = yargs
     describe: 'Port of knocking server',
     demandOption: true
   })
-  .option("target-url", {
-    describe: 'Target URL to hide',
+  .option("target-host", {
+    describe: 'Target host to hide',
+    demandOption: true
+  })
+  .option("target-port", {
+    describe: 'Target port to hide',
     demandOption: true
   })
   .option("open-knocking", {
@@ -40,8 +44,10 @@ try {
 
   // Get server port
   const port: string      = args['port'];
-  // Get target URL
-  const targetUrl: string = args['target-url'];
+  // Get target host
+  const targetHost: string = args['target-host'];
+  // Get target port
+  const targetPort: number = args['target-port'];
   // Get open knocking sequence
   const openKnockingSeq: string[]  = args['open-knocking'].split(",");
   // Get close knocking sequence
@@ -53,9 +59,11 @@ try {
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
-    targetUrl,
+    targetHost,
+    targetPort,
     openKnockingSeq,
     closeKnockingSeq,
+    false, // TODO: Hard code
     autoCloseMillis,
     openKnockingMaxIntervalMillis
   );

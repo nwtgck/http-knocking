@@ -42,9 +42,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        knockingUrl,
+        "localhost",
+        knockingPort,
         openKnockingSeq,
         closeKnockingSeq,
+        false,
         undefined,
         undefined,
         true
@@ -69,9 +71,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        false,
         undefined,
         undefined,
         true
@@ -111,9 +115,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        false,
         undefined,
         undefined,
         true
@@ -153,9 +159,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        false,
         undefined,
         undefined,
         true
@@ -212,9 +220,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        false,
         undefined,
         undefined,
         true
@@ -266,9 +276,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        false,
         5000, // 5sec
         undefined,
         true
@@ -318,9 +330,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        false,
         undefined,
         2000, // 2sec
         true
@@ -355,9 +369,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        false,
         undefined,
         2000, // 2sec
         true
