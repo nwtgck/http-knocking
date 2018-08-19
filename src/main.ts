@@ -19,7 +19,8 @@ const parser = yargs
   })
   .option("target-port", {
     describe: 'Target port to hide',
-    demandOption: true
+    demandOption: false,
+    default: 80
   })
   .option("open-knocking", {
     describe: 'Open-knocking sequence (e.g. "/alpha,/foxtrot,/lima")',
