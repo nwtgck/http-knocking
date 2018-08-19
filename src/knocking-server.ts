@@ -116,7 +116,8 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       if (isOpen) {
         proxy.ws(req, socket, head);
       } else {
-        // TODO: Close this connection
+        // Close this connection
+        socket.destroy();
       }
     });
   }
