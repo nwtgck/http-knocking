@@ -109,14 +109,17 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
     }
   });
 
-  // WebSocket server proxy
-  server.on('upgrade', (req, socket, head) => {
-    if(isOpen) {
-      proxy.ws(req, socket, head);
-    } else {
-      // TODO: Close this connection
-    }
-  });
+
+  if(enableWebSocket) {
+    // WebSocket server proxy
+    server.on('upgrade', (req, socket, head) => {
+      if (isOpen) {
+        proxy.ws(req, socket, head);
+      } else {
+        // TODO: Close this connection
+      }
+    });
+  }
 
   return server;
 }
