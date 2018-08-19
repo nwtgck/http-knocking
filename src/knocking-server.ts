@@ -1,6 +1,7 @@
 import * as httpProxy from "http-proxy";
 import * as http from "http";
 import * as url from "url";
+import * as net from "net";
 
 /**
  * Run the knocking
@@ -112,7 +113,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
 
   if(enableWebSocket) {
     // WebSocket server proxy
-    server.on('upgrade', (req, socket, head) => {
+    server.on('upgrade', (req: http.IncomingMessage, socket: net.Socket, head: any) => {
       if (isOpen) {
         proxy.ws(req, socket, head);
       } else {
