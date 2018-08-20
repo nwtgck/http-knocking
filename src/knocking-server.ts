@@ -1,19 +1,27 @@
 import * as httpProxy from "http-proxy";
 import * as http from "http";
 import * as url from "url";
+import * as net from "net";
 
 /**
  * Run the knocking
- * @param {string | url.URL} targetUrl
+ * @param {string} targetHost
+ * @param {number} targetPort
  * @param {string[]} openKnockingSeq
  * @param {string[]} closeKnockingSeq
+ * @param {boolean} enableWebSocket
  * @param {number | undefined} autoCloseMillis
  * @param {number | undefined} openKnockingMaxIntervalMillis
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetUrl: string | url.URL, openKnockingSeq: string[], closeKnockingSeq: string[], autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, quiet: boolean = false) {
+export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, quiet: boolean = false) {
   // Create proxy instance
-  const proxy = httpProxy.createServer();
+  const proxy = httpProxy.createServer(
+    enableWebSocket ? {
+      "target": `ws://${targetHost}:${targetPort}`,
+      "ws": true
+    } : {}
+  );
 
   // Whether Server is available or not
   let isOpen: boolean = false;
@@ -71,7 +79,7 @@ export function createKnockingServer(targetUrl: string | url.URL, openKnockingSe
         res.end();
       } else {
         // Use proxy
-        proxy.web(req, res, {target: targetUrl});
+        proxy.web(req, res, {target: `http://${targetHost}:${targetPort}`});
       }
     } else if (pathName === openKnockingSeq[openKnockingIdx]) {
       if(openKnockingMaxIntervalTimeoutId !== undefined) {
@@ -101,6 +109,19 @@ export function createKnockingServer(targetUrl: string | url.URL, openKnockingSe
       res.end();
     }
   });
+
+
+  if(enableWebSocket) {
+    // WebSocket server proxy
+    server.on('upgrade', (req: http.IncomingMessage, socket: net.Socket, head: any) => {
+      if (isOpen) {
+        proxy.ws(req, socket, head);
+      } else {
+        // Close this connection
+        socket.destroy();
+      }
+    });
+  }
 
   return server;
 }

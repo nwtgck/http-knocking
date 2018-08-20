@@ -13,9 +13,14 @@ const parser = yargs
     describe: 'Port of knocking server',
     demandOption: true
   })
-  .option("target-url", {
-    describe: 'Target URL to hide',
+  .option("target-host", {
+    describe: 'Target host to hide',
     demandOption: true
+  })
+  .option("target-port", {
+    describe: 'Target port to hide',
+    demandOption: false,
+    default: 80
   })
   .option("open-knocking", {
     describe: 'Open-knocking sequence (e.g. "/alpha,/foxtrot,/lima")',
@@ -24,6 +29,11 @@ const parser = yargs
   .option("close-knocking", {
     describe: 'Close-knocking sequence (e.g. "/victor,/kilo")',
     demandOption: false
+  })
+  .option("enable-websocket", {
+    describe: 'Enable WebSocket proxy',
+    demandOption: false,
+    default: false
   })
   .option("auto-close-millis", {
     describe: 'Time millis to close automatically',
@@ -40,12 +50,16 @@ try {
 
   // Get server port
   const port: string      = args['port'];
-  // Get target URL
-  const targetUrl: string = args['target-url'];
+  // Get target host
+  const targetHost: string = args['target-host'];
+  // Get target port
+  const targetPort: number = args['target-port'];
   // Get open knocking sequence
   const openKnockingSeq: string[]  = args['open-knocking'].split(",");
   // Get close knocking sequence
   const closeKnockingSeq: string[] = args['close-knocking'] === undefined ? openKnockingSeq.slice().reverse() : args['close-knocking'].split(",");
+  // Get enable-websocket
+  const enableWebSocket: boolean = args['enable-websocket'];
   // Get auto-close millis
   const autoCloseMillis: number | undefined = args['auto-close-millis'];
   // Get open-knocking max interval mills
@@ -53,9 +67,11 @@ try {
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
-    targetUrl,
+    targetHost,
+    targetPort,
     openKnockingSeq,
     closeKnockingSeq,
+    enableWebSocket,
     autoCloseMillis,
     openKnockingMaxIntervalMillis
   );

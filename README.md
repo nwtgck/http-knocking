@@ -14,7 +14,7 @@ Suppose http://localhost:8181/ is running. The following command runs a http-kno
 
 ```bash
 npm install -g http-knocking
-http-knocking --port=8282 --target-url=http://localhost:8181 --open-knocking="/alpha,/foxtrot,/lima"
+http-knocking --port=8282 --target-host=localhost --target-port=8181 --open-knocking="/alpha,/foxtrot,/lima"
 ```
 
 In the case of `--open-knocking="/alpha,/foxtrot,/lima"`, you can **open the server** by accessing to
@@ -35,13 +35,13 @@ Here is a `docker-compose.yml` to run [Ghost](https://ghost.org/) on http-knocki
 version: '3.1'
 services:
   http-knocking:
-    image: nwtgck/http-knocking:v0.2.0
+    image: nwtgck/http-knocking:v0.3.0
     ports:
       - '8282:8282'
     depends_on:
       - ghost
     restart: always
-    command: --port=8282 --target-url=http://ghost:2368 --open-knocking="/alpha,/foxtrot,/lima"
+    command: --port=8282 --target-host=ghost --target-port=2368 --open-knocking="/alpha,/foxtrot,/lima"
   ghost:
     image: ghost
     restart: always
@@ -58,11 +58,13 @@ Options:
   --help                               Show help                       [boolean]
   --version                            Show version number             [boolean]
   --port                               Port of knocking server        [required]
-  --target-url                         Target URL to hide             [required]
+  --target-host                        Target host to hide            [required]
+  --target-port                        Target port to hide         [default: 80]
   --open-knocking                      Open-knocking sequence (e.g.
                                        "/alpha,/foxtrot,/lima")       [required]
   --close-knocking                     Close-knocking sequence (e.g.
                                        "/victor,/kilo")
+  --enable-websocket                   Enable WebSocket proxy   [default: false]
   --auto-close-millis                  Time millis to close automatically
   --open-knocking-max-interval-millis  Time millis to reset open procedure
 ```
