@@ -3,7 +3,6 @@ import * as assert from 'power-assert';
 import thenRequest from 'then-request';
 import * as express from 'express';
 import * as websocket from 'websocket';
-import * as process from 'process';
 import * as WebSocket from 'ws';
 
 import * as knockingServer from '../src/knocking-server';
@@ -13,6 +12,65 @@ import * as knockingServer from '../src/knocking-server';
 // (from: https://qiita.com/yuba/items/2b17f9ac188e5138319c)
 function sleep(ms: number): Promise<any> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * WebSocket open promise
+ * @param ws
+ */
+function wsOpenPromise(ws: WebSocket): Promise<any> {
+  return new Promise<any>((resolve, reject)=>{
+    const errorHandler = (err: Error) => {
+      ws.removeListener('open', openHandler);
+      reject(err);
+    };
+    const openHandler = () => {
+      ws.removeListener('error', errorHandler);
+      resolve();
+    };
+    ws.on('error', errorHandler);
+    ws.on('open', openHandler);
+  });
+}
+
+/**
+ * WebSocket close promise
+ * @param ws
+ */
+function wsClosePromise(ws: WebSocket): Promise<any> {
+  // Close WebSocket
+  ws.close();
+  return new Promise<any>((resolve, reject)=>{
+    const errorHandler = (err: Error) => {
+      ws.removeListener('close', closeHandler);
+      reject(err);
+    };
+    const closeHandler = () => {
+      ws.removeListener('error', errorHandler);
+      resolve();
+    };
+    ws.on('error', errorHandler);
+    ws.on('close', closeHandler);
+  });
+}
+
+/**
+ * WebSocket message promise
+ * @param ws
+ */
+function wsMessagePromise(ws: WebSocket): Promise<any> {
+  return new Promise<any>((resolve, reject)=>{
+    const errorHandler = (err: Error) => {
+      ws.removeListener('message', messageHandler);
+      reject(err);
+    };
+    const messageHandler = (data: any) => {
+      ws.removeListener('error', errorHandler);
+      resolve(data);
+    };
+    ws.on('error', errorHandler);
+    ws.on('message', messageHandler);
+  });
 }
 
 describe("knockingServer", ()=>{
@@ -94,7 +152,8 @@ describe("knockingServer", ()=>{
       await server.close();
     });
 
-    it("should open by open-knocking sequence", (done)=>{
+
+    it("should open by open-knocking sequence", async ()=>{
       const knockingPort: number = 6677;
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
@@ -110,50 +169,53 @@ describe("knockingServer", ()=>{
         true
       );
 
-      (async () => {
-        await server.listen(knockingPort);
+      await server.listen(knockingPort);
 
+      try {
         let res;
 
+        res = await thenRequest("GET", `${knockingUrl}/82`);
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/delta`);
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/echo`);
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.getBody("UTF-8"), "Open\n");
+
+        res = await thenRequest("GET", `${knockingUrl}/`);
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.getBody("UTF-8"), "This is top page!\n");
+
+        res = await thenRequest("GET", `${knockingUrl}/about`);
+        assert.equal(res.statusCode, 200);
+        assert.equal(res.getBody("UTF-8"), "This is about page\n");
+
+
+        let ws: WebSocket;
         try {
-          res = await thenRequest("GET", `${knockingUrl}/82`);
-          assert.equal(res.statusCode, 200);
-          assert.equal(res.getBody("UTF-8"), "");
-
-          res = await thenRequest("GET", `${knockingUrl}/delta`);
-          assert.equal(res.statusCode, 200);
-          assert.equal(res.getBody("UTF-8"), "");
-
-          res = await thenRequest("GET", `${knockingUrl}/echo`);
-          assert.equal(res.statusCode, 200);
-          assert.equal(res.getBody("UTF-8"), "Open\n");
-
-          res = await thenRequest("GET", `${knockingUrl}/`);
-          assert.equal(res.statusCode, 200);
-          assert.equal(res.getBody("UTF-8"), "This is top page!\n");
-
-          res = await thenRequest("GET", `${knockingUrl}/about`);
-          assert.equal(res.statusCode, 200);
-          assert.equal(res.getBody("UTF-8"), "This is about page\n");
-        } catch(err) {
-          // // Close the server
-          server.close(done);
-        }
-      })().then(()=>{
-        const ws = new WebSocket(`ws://localhost:${knockingPort}`);
-        ws.on('open', ()=>{
+          ws = new WebSocket(`ws://localhost:${knockingPort}`);
+          // Wait for open
+          await wsOpenPromise(ws);
+          // Send a message
           ws.send("hello");
-        });
-        ws.once('message', (data)=>{
+          // Wait for a response
+          const data = await wsMessagePromise(ws);
+          // Ensure the response is "<message>+!!"
           assert.equal(data, "hello!!");
-          ws.close();
-          server.close(done);
-        });
-        ws.on('error', ()=>{
-          ws.close();
-          server.close(done);
-        })
-      });
+        } finally {
+          if(ws) {
+            // Close ws
+            await wsClosePromise(ws);
+          }
+        }
+      } finally  {
+        // // Close the server
+        await server.close();
+      }
     });
 
     it("should open by open-knocking sequence with other requests", async ()=>{
