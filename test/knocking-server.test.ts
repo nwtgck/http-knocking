@@ -2,14 +2,69 @@ import * as http   from 'http';
 import * as assert from 'power-assert';
 import thenRequest from 'then-request';
 import * as express from 'express';
+import * as websocket from 'websocket';
+import * as WebSocket from 'ws';
+import * as testUtil from './test-util';
 
 import * as knockingServer from '../src/knocking-server';
 
 
-// Sleep
-// (from: https://qiita.com/yuba/items/2b17f9ac188e5138319c)
-function sleep(ms: number): Promise<any> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+/**
+ * Assert Knocking server is open
+ * @param knockingPort
+ */
+async function assertKnockingServerIsOpen(knockingPort: number): Promise<void> {
+  // Define knocking URL
+  const knockingUrl: string = `http://localhost:${knockingPort}`;
+
+  let res;
+  res = await thenRequest("GET", `${knockingUrl}/`);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.getBody("UTF-8"), "This is top page!\n");
+
+  res = await thenRequest("GET", `${knockingUrl}/about`);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.getBody("UTF-8"), "This is about page\n");
+
+  let ws: WebSocket;
+  try {
+    ws = new WebSocket(`ws://localhost:${knockingPort}`);
+    // Wait for open
+    await testUtil.wsOnOpenPromise(ws);
+    // Send a message
+    ws.send("hello");
+    // Wait for a response
+    const data = await testUtil.wsOnMessagePromise(ws);
+    // Ensure the response is "<message>+!!"
+    assert.equal(data, "hello!!");
+  } finally {
+    if(ws) {
+      // Close ws
+      await testUtil.wsClosePromise(ws);
+    }
+  }
+}
+
+/**
+ * Assert Knocking server is closed
+ * @param knockingPort
+ */
+async function assertKnockingServerIsClosed(knockingPort: number): Promise<void> {
+  // Define knocking URL
+  const knockingUrl: string = `http://localhost:${knockingPort}`;
+
+  let res;
+  res = await thenRequest("GET", `${knockingUrl}/`);
+  assert.equal(res.statusCode,200);
+  assert.equal(res.getBody("UTF-8"), "");
+
+  res = await thenRequest("GET", `${knockingUrl}/about`);
+  assert.equal(res.statusCode,200);
+  assert.equal(res.getBody("UTF-8"), "");
+
+  // WebSocket connection should be rejected
+  const wsConnected = await testUtil.wsIsConnectedPromise(`ws://localhost:${knockingPort}`);
+  assert.equal(wsConnected, false);
 }
 
 describe("knockingServer", ()=>{
@@ -27,7 +82,33 @@ describe("knockingServer", ()=>{
         res.send("This is about page\n");
       });
 
-      return app.listen(targetServerPort);
+      // HTTP server
+      const server = app.listen(targetServerPort);
+
+      // WebSocket server
+      const wsServer = new websocket.server({
+        httpServer: server,
+        // You should not use autoAcceptConnections for production
+        // applications, as it defeats all standard cross-origin protection
+        // facilities built into the protocol and the browser.  You should
+        // *always* verify the connection's origin and decide whether or not
+        // to accept it.
+        autoAcceptConnections: false
+      });
+
+      // (from: https://qiita.com/n0bisuke/items/cb6216dbb9c3c13a10a8)
+      wsServer.on('request', function(request: websocket.request) {
+        const connection = request.accept('', request.origin);
+        connection.on('message', function(message) {
+          if (message.type === 'utf8') {
+            connection.sendUTF(message.utf8Data + "!!");
+          }
+        });
+        connection.on('close', function(reasonCode, description) {
+        });
+      });
+
+      return server;
     })();
 
 
@@ -42,26 +123,23 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        knockingUrl,
+        "localhost",
+        knockingPort,
         openKnockingSeq,
         closeKnockingSeq,
+        true,
         undefined,
         undefined,
         true
       );
       await server.listen(knockingPort);
 
-      let res;
-      res = await thenRequest("GET", `${knockingUrl}/`);
-      assert.equal(res.statusCode,200);
-      assert.equal(res.getBody("UTF-8"), "");
-
-      res = await thenRequest("GET", `${knockingUrl}/about`);
-      assert.equal(res.statusCode,200);
-      assert.equal(res.getBody("UTF-8"), "");
+      // Assert the knocking server is closed
+      await assertKnockingServerIsClosed(knockingPort);
 
       await server.close();
     });
+
 
     it("should open by open-knocking sequence", async ()=>{
       const knockingPort: number = 6677;
@@ -69,38 +147,37 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        true,
         undefined,
         undefined,
         true
       );
-      await server.listen(knockingPort);
 
+      await server.listen(knockingPort);
 
       try {
         let res;
+
         res = await thenRequest("GET", `${knockingUrl}/82`);
-        assert.equal(res.statusCode,200);
+        assert.equal(res.statusCode, 200);
         assert.equal(res.getBody("UTF-8"), "");
 
         res = await thenRequest("GET", `${knockingUrl}/delta`);
-        assert.equal(res.statusCode,200);
+        assert.equal(res.statusCode, 200);
         assert.equal(res.getBody("UTF-8"), "");
 
         res = await thenRequest("GET", `${knockingUrl}/echo`);
-        assert.equal(res.statusCode,200);
+        assert.equal(res.statusCode, 200);
         assert.equal(res.getBody("UTF-8"), "Open\n");
 
-        res = await thenRequest("GET", `${knockingUrl}/`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "This is top page!\n");
-
-        res = await thenRequest("GET", `${knockingUrl}/about`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "This is about page\n");
-      } finally {
+        // Assert the knocking server is open
+        await assertKnockingServerIsOpen(knockingPort);
+      } finally  {
+        // // Close the server
         await server.close();
       }
     });
@@ -111,9 +188,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        true,
         undefined,
         undefined,
         true
@@ -135,13 +214,8 @@ describe("knockingServer", ()=>{
         res = await thenRequest("GET", `${knockingUrl}/echo`);
         assert.equal(res.getBody("UTF-8"), "Open\n");
 
-        res = await thenRequest("GET", `${knockingUrl}/`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "This is top page!\n");
-
-        res = await thenRequest("GET", `${knockingUrl}/about`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "This is about page\n");
+        // Assert the knocking server is open
+        await assertKnockingServerIsOpen(knockingPort);
       } finally {
         await server.close();
       }
@@ -153,9 +227,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        true,
         undefined,
         undefined,
         true
@@ -193,14 +269,8 @@ describe("knockingServer", ()=>{
         assert.equal(res.getBody("UTF-8"), "Closed\n");
 
 
-        // Check whether the server is closed
-        res = await thenRequest("GET", `${knockingUrl}/`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "");
-
-        res = await thenRequest("GET", `${knockingUrl}/about`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "");
+        // Assert the knocking server is closed
+        await assertKnockingServerIsClosed(knockingPort);
       } finally {
         await server.close();
       }
@@ -212,9 +282,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        true,
         undefined,
         undefined,
         true
@@ -246,15 +318,8 @@ describe("knockingServer", ()=>{
         res = await thenRequest("GET", `${knockingUrl}/three`);
         assert.equal(res.getBody("UTF-8"), "Closed\n");
 
-
-        // Check whether the server is closed
-        res = await thenRequest("GET", `${knockingUrl}/`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "");
-
-        res = await thenRequest("GET", `${knockingUrl}/about`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "");
+        // Assert the knocking server is closed
+        await assertKnockingServerIsClosed(knockingPort);
       } finally {
         await server.close();
       }
@@ -266,9 +331,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        true,
         5000, // 5sec
         undefined,
         true
@@ -289,7 +356,7 @@ describe("knockingServer", ()=>{
         assert.equal(res.getBody("UTF-8"), "This is top page!\n");
 
         // Wait for 2sec
-        await sleep(2000);
+        await testUtil.sleep(2000);
 
         // Check whether the server is open
         res = await thenRequest("GET", `${knockingUrl}/`);
@@ -297,16 +364,10 @@ describe("knockingServer", ()=>{
         assert.equal(res.getBody("UTF-8"), "This is top page!\n");
 
         // Wait for 4sec
-        await sleep(4000);
+        await testUtil.sleep(4000);
 
-        // Check whether the server is closed
-        res = await thenRequest("GET", `${knockingUrl}/`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "");
-
-        res = await thenRequest("GET", `${knockingUrl}/about`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "");
+        // Assert the knocking server is closed
+        await assertKnockingServerIsClosed(knockingPort);
       } finally {
         await server.close();
       }
@@ -318,9 +379,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        true,
         undefined,
         2000, // 2sec
         true
@@ -332,18 +395,14 @@ describe("knockingServer", ()=>{
         // Open the server by knocking
         await thenRequest("GET", `${knockingUrl}/82`);
         // Wait for 1.0sec
-        await sleep(1000);
+        await testUtil.sleep(1000);
         await thenRequest("GET", `${knockingUrl}/delta`);
         // Wait for 1.2sec
-        await sleep(1200);
+        await testUtil.sleep(1200);
         await thenRequest("GET", `${knockingUrl}/echo`);
 
-        let res;
-        // Check whether the server is open
-        res = await thenRequest("GET", `${knockingUrl}/`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "This is top page!\n");
-
+        // Assert the knocking server is open
+        await assertKnockingServerIsOpen(knockingPort);
       } finally {
         await server.close();
       }
@@ -355,9 +414,11 @@ describe("knockingServer", ()=>{
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
       const server = knockingServer.createKnockingServer(
-        `http://localhost:${targetServerPort}`,
+        "localhost",
+        targetServerPort,
         openKnockingSeq,
         closeKnockingSeq,
+        true,
         undefined,
         2000, // 2sec
         true
@@ -369,28 +430,22 @@ describe("knockingServer", ()=>{
         // Open the server by knocking
         await thenRequest("GET", `${knockingUrl}/82`);
         // Wait for 1.0sec
-        await sleep(1000);
+        await testUtil.sleep(1000);
         await thenRequest("GET", `${knockingUrl}/delta`);
         // Wait for 3.0sec // NOTE: Over 2sec
-        await sleep(3000);
+        await testUtil.sleep(3000);
         await thenRequest("GET", `${knockingUrl}/echo`);
 
-        let res;
-        // Check whether the server is closed
-        res = await thenRequest("GET", `${knockingUrl}/`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "");
-
+        // Assert the knocking server is closed
+        await assertKnockingServerIsClosed(knockingPort);
 
         // Open the server by knocking
         await thenRequest("GET", `${knockingUrl}/82`);
         await thenRequest("GET", `${knockingUrl}/delta`);
         await thenRequest("GET", `${knockingUrl}/echo`);
 
-        // Check whether the server is open
-        res = await thenRequest("GET", `${knockingUrl}/`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "This is top page!\n");
+        // Assert the knocking server is open
+        await assertKnockingServerIsOpen(knockingPort);
 
       } finally {
         await server.close();
