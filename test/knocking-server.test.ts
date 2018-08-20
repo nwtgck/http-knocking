@@ -4,101 +4,10 @@ import thenRequest from 'then-request';
 import * as express from 'express';
 import * as websocket from 'websocket';
 import * as WebSocket from 'ws';
+import * as testUtil from './test-util';
 
 import * as knockingServer from '../src/knocking-server';
 
-
-// Sleep
-// (from: https://qiita.com/yuba/items/2b17f9ac188e5138319c)
-function sleep(ms: number): Promise<any> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * WebSocket on-open promise
- * @param ws
- */
-function wsOnOpenPromise(ws: WebSocket): Promise<any> {
-  return new Promise<any>((resolve, reject)=>{
-    const errorHandler = (err: Error) => {
-      ws.removeListener('open', openHandler);
-      reject(err);
-    };
-    const openHandler = () => {
-      ws.removeListener('error', errorHandler);
-      resolve();
-    };
-    ws.on('error', errorHandler);
-    ws.on('open', openHandler);
-  });
-}
-
-/**
- * WebSocket on-close promise
- * @param ws
- */
-function wsOnClosePromise(ws: WebSocket): Promise<any> {
-  return new Promise<any>((resolve, reject)=>{
-    const errorHandler = (err: Error) => {
-      ws.removeListener('close', closeHandler);
-      reject(err);
-    };
-    const closeHandler = () => {
-      ws.removeListener('error', errorHandler);
-      resolve();
-    };
-    ws.on('error', errorHandler);
-    ws.on('close', closeHandler);
-  });
-}
-
-/**
- * WebSocket close promise
- * @param ws
- */
-function wsClosePromise(ws: WebSocket): Promise<any> {
-  // Close WebSocket
-  ws.close();
-  return wsOnClosePromise(ws);
-}
-
-/**
- * WebSocket on-message promise
- * @param ws
- */
-function wsOnMessagePromise(ws: WebSocket): Promise<any> {
-  return new Promise<any>((resolve, reject)=>{
-    const errorHandler = (err: Error) => {
-      ws.removeListener('message', messageHandler);
-      reject(err);
-    };
-    const messageHandler = (data: any) => {
-      ws.removeListener('error', errorHandler);
-      resolve(data);
-    };
-    ws.on('error', errorHandler);
-    ws.on('message', messageHandler);
-  });
-}
-
-
-/**
- * Whether WebSocket connection is connectable or not
- * @param url
- */
-function wsIsConnectedPromise(url: string): Promise<boolean> {
-  return new Promise<boolean>((resolve, reject)=>{
-    const wsClient = new websocket.client();
-    wsClient.on('connect', (connection)=>{
-      resolve(true);
-      wsClient.abort();
-    });
-    wsClient.on('connectFailed', (err)=>{
-      resolve(false);
-    });
-    wsClient.connect(url);
-  });
-}
 
 describe("knockingServer", ()=>{
   context("createKnockingServer", ()=>{
@@ -177,7 +86,7 @@ describe("knockingServer", ()=>{
       assert.equal(res.getBody("UTF-8"), "");
 
       // WebSocket connection should be rejected
-      const wsConnected = await wsIsConnectedPromise(`ws://localhost:${knockingPort}`);
+      const wsConnected = await testUtil.wsIsConnectedPromise(`ws://localhost:${knockingPort}`);
       assert.equal(wsConnected, false);
 
       await server.close();
@@ -230,17 +139,17 @@ describe("knockingServer", ()=>{
         try {
           ws = new WebSocket(`ws://localhost:${knockingPort}`);
           // Wait for open
-          await wsOnOpenPromise(ws);
+          await testUtil.wsOnOpenPromise(ws);
           // Send a message
           ws.send("hello");
           // Wait for a response
-          const data = await wsOnMessagePromise(ws);
+          const data = await testUtil.wsOnMessagePromise(ws);
           // Ensure the response is "<message>+!!"
           assert.equal(data, "hello!!");
         } finally {
           if(ws) {
             // Close ws
-            await wsClosePromise(ws);
+            await testUtil.wsClosePromise(ws);
           }
         }
       } finally  {
@@ -441,7 +350,7 @@ describe("knockingServer", ()=>{
         assert.equal(res.getBody("UTF-8"), "This is top page!\n");
 
         // Wait for 2sec
-        await sleep(2000);
+        await testUtil.sleep(2000);
 
         // Check whether the server is open
         res = await thenRequest("GET", `${knockingUrl}/`);
@@ -449,7 +358,7 @@ describe("knockingServer", ()=>{
         assert.equal(res.getBody("UTF-8"), "This is top page!\n");
 
         // Wait for 4sec
-        await sleep(4000);
+        await testUtil.sleep(4000);
 
         // Check whether the server is closed
         res = await thenRequest("GET", `${knockingUrl}/`);
@@ -486,10 +395,10 @@ describe("knockingServer", ()=>{
         // Open the server by knocking
         await thenRequest("GET", `${knockingUrl}/82`);
         // Wait for 1.0sec
-        await sleep(1000);
+        await testUtil.sleep(1000);
         await thenRequest("GET", `${knockingUrl}/delta`);
         // Wait for 1.2sec
-        await sleep(1200);
+        await testUtil.sleep(1200);
         await thenRequest("GET", `${knockingUrl}/echo`);
 
         let res;
@@ -525,10 +434,10 @@ describe("knockingServer", ()=>{
         // Open the server by knocking
         await thenRequest("GET", `${knockingUrl}/82`);
         // Wait for 1.0sec
-        await sleep(1000);
+        await testUtil.sleep(1000);
         await thenRequest("GET", `${knockingUrl}/delta`);
         // Wait for 3.0sec // NOTE: Over 2sec
-        await sleep(3000);
+        await testUtil.sleep(3000);
         await thenRequest("GET", `${knockingUrl}/echo`);
 
         let res;
