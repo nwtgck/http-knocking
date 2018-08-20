@@ -30,6 +30,11 @@ const parser = yargs
     describe: 'Close-knocking sequence (e.g. "/victor,/kilo")',
     demandOption: false
   })
+  .option("enable-websocket", {
+    describe: 'Enable WebSocket proxy',
+    demandOption: false,
+    default: false
+  })
   .option("auto-close-millis", {
     describe: 'Time millis to close automatically',
     demandOption: false,
@@ -53,6 +58,8 @@ try {
   const openKnockingSeq: string[]  = args['open-knocking'].split(",");
   // Get close knocking sequence
   const closeKnockingSeq: string[] = args['close-knocking'] === undefined ? openKnockingSeq.slice().reverse() : args['close-knocking'].split(",");
+  // Get enable-websocket
+  const enableWebSocket: boolean = args['enable-websocket'];
   // Get auto-close millis
   const autoCloseMillis: number | undefined = args['auto-close-millis'];
   // Get open-knocking max interval mills
@@ -64,7 +71,7 @@ try {
     targetPort,
     openKnockingSeq,
     closeKnockingSeq,
-    false, // TODO: Hard code
+    enableWebSocket,
     autoCloseMillis,
     openKnockingMaxIntervalMillis
   );
