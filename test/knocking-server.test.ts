@@ -15,10 +15,10 @@ function sleep(ms: number): Promise<any> {
 }
 
 /**
- * WebSocket open promise
+ * WebSocket on-open promise
  * @param ws
  */
-function wsOpenPromise(ws: WebSocket): Promise<any> {
+function wsOnOpenPromise(ws: WebSocket): Promise<any> {
   return new Promise<any>((resolve, reject)=>{
     const errorHandler = (err: Error) => {
       ws.removeListener('open', openHandler);
@@ -34,12 +34,10 @@ function wsOpenPromise(ws: WebSocket): Promise<any> {
 }
 
 /**
- * WebSocket close promise
+ * WebSocket on-close promise
  * @param ws
  */
-function wsClosePromise(ws: WebSocket): Promise<any> {
-  // Close WebSocket
-  ws.close();
+function wsOnClosePromise(ws: WebSocket): Promise<any> {
   return new Promise<any>((resolve, reject)=>{
     const errorHandler = (err: Error) => {
       ws.removeListener('close', closeHandler);
@@ -55,10 +53,20 @@ function wsClosePromise(ws: WebSocket): Promise<any> {
 }
 
 /**
- * WebSocket message promise
+ * WebSocket close promise
  * @param ws
  */
-function wsMessagePromise(ws: WebSocket): Promise<any> {
+function wsClosePromise(ws: WebSocket): Promise<any> {
+  // Close WebSocket
+  ws.close();
+  return wsOnClosePromise(ws);
+}
+
+/**
+ * WebSocket on-message promise
+ * @param ws
+ */
+function wsOnMessagePromise(ws: WebSocket): Promise<any> {
   return new Promise<any>((resolve, reject)=>{
     const errorHandler = (err: Error) => {
       ws.removeListener('message', messageHandler);
@@ -70,6 +78,25 @@ function wsMessagePromise(ws: WebSocket): Promise<any> {
     };
     ws.on('error', errorHandler);
     ws.on('message', messageHandler);
+  });
+}
+
+
+/**
+ * Whether WebSocket connection is connectable or not
+ * @param url
+ */
+function wsIsConnectedPromise(url: string): Promise<boolean> {
+  return new Promise<boolean>((resolve, reject)=>{
+    const wsClient = new websocket.client();
+    wsClient.on('connect', (connection)=>{
+      resolve(true);
+      wsClient.abort();
+    });
+    wsClient.on('connectFailed', (err)=>{
+      resolve(false);
+    });
+    wsClient.connect(url);
   });
 }
 
@@ -133,7 +160,7 @@ describe("knockingServer", ()=>{
         knockingPort,
         openKnockingSeq,
         closeKnockingSeq,
-        false,
+        true,
         undefined,
         undefined,
         true
@@ -148,6 +175,10 @@ describe("knockingServer", ()=>{
       res = await thenRequest("GET", `${knockingUrl}/about`);
       assert.equal(res.statusCode,200);
       assert.equal(res.getBody("UTF-8"), "");
+
+      // WebSocket connection should be rejected
+      const wsConnected = await wsIsConnectedPromise(`ws://localhost:${knockingPort}`);
+      assert.equal(wsConnected, false);
 
       await server.close();
     });
@@ -199,11 +230,11 @@ describe("knockingServer", ()=>{
         try {
           ws = new WebSocket(`ws://localhost:${knockingPort}`);
           // Wait for open
-          await wsOpenPromise(ws);
+          await wsOnOpenPromise(ws);
           // Send a message
           ws.send("hello");
           // Wait for a response
-          const data = await wsMessagePromise(ws);
+          const data = await wsOnMessagePromise(ws);
           // Ensure the response is "<message>+!!"
           assert.equal(data, "hello!!");
         } finally {
