@@ -38,8 +38,8 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
     closeKnockingIdx = 0;
   }
 
-  // Close by millis if millis are defined
-  function closeByMillisIfDefined(millis: number | undefined): NodeJS.Timer | undefined {
+  // Set close-timer if millis are defined
+  function setCloseTimerIfDefined(millis: number | undefined): void {
     // Cancel auto-close-by-time if a timer is defined
     cancelAutoCloseByTimeIfDefined();
 
@@ -47,7 +47,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       return undefined;
     } else {
       // Close the server in millis
-      return setTimeout(() => {
+      timerId = setTimeout(() => {
         // Close
         isOpen = false;
         // Set open/close indexes
@@ -106,13 +106,13 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         isOpen = true;
         // Set open/close indexes
         resetIdxs();
-        // Close by closeByMillisIfDefined if it is defined
-        timerId = closeByMillisIfDefined(autoCloseMillis);
+        // Set close-timer if millis are defined
+        setCloseTimerIfDefined(autoCloseMillis);
 
         res.write("Open\n");
       } else {
-        // Close by openKnockingMaxIntervalMillis if it is defined
-        timerId = closeByMillisIfDefined(openKnockingMaxIntervalMillis);
+        // Set close-timer if millis are defined
+        setCloseTimerIfDefined(openKnockingMaxIntervalMillis);
       }
       res.end();
     } else {
