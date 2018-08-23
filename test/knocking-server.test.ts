@@ -349,19 +349,14 @@ describe("knockingServer", ()=>{
         await thenRequest("GET", `${knockingUrl}/delta`);
         await thenRequest("GET", `${knockingUrl}/echo`);
 
-        let res;
         // Check whether the server is open
-        res = await thenRequest("GET", `${knockingUrl}/`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "This is top page!\n");
+        await assertKnockingServerIsOpen(knockingPort);
 
         // Wait for 2sec
         await testUtil.sleep(2000);
 
         // Check whether the server is open
-        res = await thenRequest("GET", `${knockingUrl}/`);
-        assert.equal(res.statusCode,200);
-        assert.equal(res.getBody("UTF-8"), "This is top page!\n");
+        await assertKnockingServerIsOpen(knockingPort);
 
         // Wait for 4sec
         await testUtil.sleep(4000);
