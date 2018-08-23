@@ -30,7 +30,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
   // Knocking index for close
   let closeKnockingIdx: number = 0;
   // timeout ID for openKnockingMaxIntervalMillis
-  let openKnockingMaxIntervalTimeoutId: NodeJS.Timer | undefined = undefined;
+  let timerId: NodeJS.Timer | undefined = undefined;
 
   // Set open/close indexes
   function resetIdxs(){
@@ -40,6 +40,9 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
 
   // Close by millis if millis are defined
   function closeByMillisIfDefined(millis: number | undefined): NodeJS.Timer | undefined {
+    // Cancel auto-close-by-time if a timer is defined
+    cancelAutoCloseByTimeIfDefined();
+
     if(millis === undefined) {
       return undefined;
     } else {
@@ -50,6 +53,14 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         // Set open/close indexes
         resetIdxs();
       }, millis);
+    }
+  }
+
+  // Cancel auto-close-by-time if a timer is defined
+  function cancelAutoCloseByTimeIfDefined() {
+    if(timerId !== undefined) {
+      // Cancel timeout for openKnockingMaxInterval
+      clearTimeout(timerId);
     }
   }
 
@@ -70,6 +81,8 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         // Proceed close knocking
         closeKnockingIdx++;
         if (closeKnockingIdx === closeKnockingSeq.length) {
+          // Cancel auto-close-by-time if a timer is defined
+          cancelAutoCloseByTimeIfDefined();
           // Close the server
           isOpen = false;
           // Set open/close indexes
@@ -82,26 +95,24 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         proxy.web(req, res, {target: `http://${targetHost}:${targetPort}`});
       }
     } else if (pathName === openKnockingSeq[openKnockingIdx]) {
-      if(openKnockingMaxIntervalTimeoutId !== undefined) {
-        // Cancel timeout for openKnockingMaxInterval
-        clearTimeout(openKnockingMaxIntervalTimeoutId);
-      }
+      // Cancel auto-close-by-time if a timer is defined
+      cancelAutoCloseByTimeIfDefined();
       // Proceed open knocking
       openKnockingIdx++;
       if (openKnockingIdx === openKnockingSeq.length) {
-        // Clear openKnockingMaxIntervalTimeoutId
-        openKnockingMaxIntervalTimeoutId = undefined;
+        // // Clear timerId
+        // timerId = undefined;
         // Open the server
         isOpen = true;
         // Set open/close indexes
         resetIdxs();
         // Close by closeByMillisIfDefined if it is defined
-        closeByMillisIfDefined(autoCloseMillis);
+        timerId = closeByMillisIfDefined(autoCloseMillis);
 
         res.write("Open\n");
       } else {
         // Close by openKnockingMaxIntervalMillis if it is defined
-        openKnockingMaxIntervalTimeoutId = closeByMillisIfDefined(openKnockingMaxIntervalMillis);
+        timerId = closeByMillisIfDefined(openKnockingMaxIntervalMillis);
       }
       res.end();
     } else {
