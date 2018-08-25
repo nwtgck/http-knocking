@@ -35,7 +35,7 @@ Here is a `docker-compose.yml` to run [Ghost](https://ghost.org/) on http-knocki
 version: '3.1'
 services:
   http-knocking:
-    image: nwtgck/http-knocking:v0.3.0
+    image: nwtgck/http-knocking:v0.3.1
     ports:
       - '8282:8282'
     depends_on:
