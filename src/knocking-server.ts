@@ -4,6 +4,40 @@ import * as url from "url";
 import * as net from "net";
 
 /**
+ * Single timer which ensure that only timer is active
+ */
+class SingleTimer {
+  private timerId: NodeJS.Timer | undefined = undefined;
+
+  constructor() {}
+
+  /**
+   * Cancel previous timer and set new one
+   * @param f
+   * @param millis
+   */
+  timeout(f: () => void, millis: number | undefined): void {
+    // Cancel the previous timer
+    this.cancel();
+
+    if (millis !== undefined) {
+      // Set new timer
+      this.timerId = setTimeout(f, millis);
+    }
+  }
+
+  /**
+   * Cancel current timer set
+   */
+  cancel(): void {
+    if (this.timerId !== undefined) {
+      // Cancel the timer
+      clearTimeout(this.timerId)
+    }
+  }
+}
+
+/**
  * Run the knocking
  * @param {string} targetHost
  * @param {number} targetPort
@@ -29,8 +63,10 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
   let openKnockingIdx: number = 0;
   // Knocking index for close
   let closeKnockingIdx: number = 0;
-  // timeout ID for openKnockingMaxIntervalMillis
-  let timerId: NodeJS.Timer | undefined = undefined;
+  // Timer of autoCloseMillis
+  let autoCloseTimer: SingleTimer = new SingleTimer();
+  // Timer of openKnockingMaxIntervalMillis
+  let openKnockingMaxIntervalTimer: SingleTimer = new SingleTimer();
 
   // Set open/close indexes
   function resetIdxs(){
@@ -38,30 +74,14 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
     closeKnockingIdx = 0;
   }
 
-  // Set close-timer if millis are defined
-  function setCloseTimerIfDefined(millis: number | undefined): void {
-    // Cancel auto-close-by-time if a timer is defined
-    cancelAutoCloseByTimeIfDefined();
-
-    if(millis === undefined) {
-      return undefined;
-    } else {
-      // Close the server in millis
-      timerId = setTimeout(() => {
-        // Close
-        isOpen = false;
-        // Set open/close indexes
-        resetIdxs();
-      }, millis);
-    }
-  }
-
-  // Cancel auto-close-by-time if a timer is defined
-  function cancelAutoCloseByTimeIfDefined() {
-    if(timerId !== undefined) {
-      // Cancel timeout for openKnockingMaxInterval
-      clearTimeout(timerId);
-    }
+  // Set timer
+  function setCloseTimerIfDefined(timer: SingleTimer, millis: number | undefined): void {
+    timer.timeout(() => {
+      // Close
+      isOpen = false;
+      // Set open/close indexes
+      resetIdxs();
+    }, millis);
   }
 
   // HTTP Reverse Proxy Server
@@ -81,8 +101,8 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         // Proceed close knocking
         closeKnockingIdx++;
         if (closeKnockingIdx === closeKnockingSeq.length) {
-          // Cancel auto-close-by-time if a timer is defined
-          cancelAutoCloseByTimeIfDefined();
+          // Cancel auto-close timer
+          autoCloseTimer.cancel();
           // Close the server
           isOpen = false;
           // Set open/close indexes
@@ -95,8 +115,8 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         proxy.web(req, res, {target: `http://${targetHost}:${targetPort}`});
       }
     } else if (pathName === openKnockingSeq[openKnockingIdx]) {
-      // Cancel auto-close-by-time if a timer is defined
-      cancelAutoCloseByTimeIfDefined();
+      // Cancel auto-close timer
+      autoCloseTimer.cancel();
       // Proceed open knocking
       openKnockingIdx++;
       if (openKnockingIdx === openKnockingSeq.length) {
@@ -107,12 +127,12 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         // Set open/close indexes
         resetIdxs();
         // Set close-timer if millis are defined
-        setCloseTimerIfDefined(autoCloseMillis);
+        setCloseTimerIfDefined(autoCloseTimer, autoCloseMillis);
 
         res.write("Open\n");
       } else {
-        // Set close-timer if millis are defined
-        setCloseTimerIfDefined(openKnockingMaxIntervalMillis);
+        // Set knocking-max-interval timer if millis are defined
+        setCloseTimerIfDefined(openKnockingMaxIntervalTimer, openKnockingMaxIntervalMillis);
       }
       res.end();
     } else {
