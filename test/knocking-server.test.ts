@@ -368,6 +368,56 @@ describe("knockingServer", ()=>{
       }
     });
 
+    it("should cancel auto-close-by-time by manual close", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        5000, // 5sec
+        undefined,
+        true
+      );
+      await server.listen(knockingPort);
+
+
+      try {
+        const open = async()=>{
+          await thenRequest("GET", `${knockingUrl}/82`);
+          await thenRequest("GET", `${knockingUrl}/delta`);
+          await thenRequest("GET", `${knockingUrl}/echo`);
+        };
+
+        const close = async()=>{
+          await thenRequest("GET", `${knockingUrl}/alpha`);
+          await thenRequest("GET", `${knockingUrl}/one`);
+          await thenRequest("GET", `${knockingUrl}/one`);
+          await thenRequest("GET", `${knockingUrl}/three`);
+        };
+
+        // Open
+        await open();
+        // Close
+        await close();
+        // Wait for 2.0sec
+        await testUtil.sleep(2000);
+        // Open
+        await open();
+        // Wait for 4.0sec
+        await testUtil.sleep(4000);
+        // Assert the knocking server is open
+        await assertKnockingServerIsOpen(knockingPort);
+
+      } finally {
+        await server.close();
+      }
+    });
+
     it("should open under open-knocking max interval", async ()=>{
       const knockingPort: number = 6677;
       const knockingUrl: string = `http://localhost:${knockingPort}`;
