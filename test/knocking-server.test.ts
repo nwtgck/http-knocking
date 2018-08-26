@@ -130,6 +130,7 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -152,6 +153,7 @@ describe("knockingServer", ()=>{
         openKnockingSeq,
         closeKnockingSeq,
         true,
+        undefined,
         undefined,
         undefined,
         true
@@ -195,6 +197,7 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -232,6 +235,7 @@ describe("knockingServer", ()=>{
         openKnockingSeq,
         closeKnockingSeq,
         true,
+        undefined,
         undefined,
         undefined,
         true
@@ -289,6 +293,7 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -338,6 +343,7 @@ describe("knockingServer", ()=>{
         true,
         5000, // 5sec
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -380,6 +386,7 @@ describe("knockingServer", ()=>{
         closeKnockingSeq,
         true,
         5000, // 5sec
+        undefined,
         undefined,
         true
       );
@@ -431,6 +438,7 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         2000, // 2sec
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -466,6 +474,7 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         2000, // 2sec
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -493,6 +502,52 @@ describe("knockingServer", ()=>{
         await assertKnockingServerIsOpen(knockingPort);
 
       } finally {
+        await server.close();
+      }
+    });
+
+    it("should connect restricted number of connections", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      // HTTP connection limit
+      const httpConnectionLimit: number = 3;
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        undefined,
+        undefined,
+        httpConnectionLimit,
+        true
+      );
+
+      await server.listen(knockingPort);
+
+      try {
+        // Open knocking server
+        await thenRequest("GET", `${knockingUrl}/82`);
+        await thenRequest("GET", `${knockingUrl}/delta`);
+        await thenRequest("GET", `${knockingUrl}/echo`);
+
+        // NOTE: Don' use `assertKnockingServerIsOpen()` to check whether server is open or not
+        //       because `assertKnockingServerIsOpen()` consumes connections.
+
+        // Connect Opened HTTP server `httpConnectionLimit`-times
+        for(let i = 0; i < httpConnectionLimit;i ++) {
+          const res = await thenRequest("GET", `${knockingUrl}/`);
+          assert.equal(res.statusCode, 200);
+          assert.equal(res.getBody("UTF-8"), "This is top page!\n");
+        }
+
+        // Assert the knocking server is closed
+        await assertKnockingServerIsClosed(knockingPort);
+
+      } finally  {
+        // // Close the server
         await server.close();
       }
     });

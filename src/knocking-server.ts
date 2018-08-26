@@ -46,9 +46,10 @@ class SingleTimer {
  * @param {boolean} enableWebSocket
  * @param {number | undefined} autoCloseMillis
  * @param {number | undefined} openKnockingMaxIntervalMillis
+ * @param {number | undefined} httpConnectionLimit
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, quiet: boolean = false) {
+export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpConnectionLimit: number | undefined = undefined, quiet: boolean = false) {
   // Create proxy instance
   const proxy = httpProxy.createServer(
     enableWebSocket ? {
@@ -67,6 +68,9 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
   let autoCloseTimer: SingleTimer = new SingleTimer();
   // Timer of openKnockingMaxIntervalMillis
   let openKnockingMaxIntervalTimer: SingleTimer = new SingleTimer();
+  // Current HTTP connection limit
+  let currHttpConnectionLimit: number | undefined = undefined;
+  // TODO: Define WebSocket limit
 
   // Set open/close indexes
   function resetIdxs(){
@@ -74,14 +78,17 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
     closeKnockingIdx = 0;
   }
 
+  // Close server
+  function closeServer(): void {
+    // Close
+    isOpen = false;
+    // Set open/close indexes
+    resetIdxs();
+  }
+
   // Set timer
   function setCloseTimerIfDefined(timer: SingleTimer, millis: number | undefined): void {
-    timer.timeout(() => {
-      // Close
-      isOpen = false;
-      // Set open/close indexes
-      resetIdxs();
-    }, millis);
+    timer.timeout(closeServer, millis);
   }
 
   // HTTP Reverse Proxy Server
@@ -93,6 +100,11 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
     if(!quiet) {
       // Print path name
       console.log(pathName);
+    }
+
+    if(isOpen && currHttpConnectionLimit !== undefined && currHttpConnectionLimit <= 0) {
+      // Close server
+      closeServer();
     }
 
     // If server is available
@@ -111,6 +123,10 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         }
         res.end();
       } else {
+        if (currHttpConnectionLimit !== undefined ) {
+          // Decrement limit of HTTP connection
+          currHttpConnectionLimit--;
+        }
         // Use proxy
         proxy.web(req, res, {target: `http://${targetHost}:${targetPort}`});
       }
@@ -120,8 +136,8 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       // Proceed open knocking
       openKnockingIdx++;
       if (openKnockingIdx === openKnockingSeq.length) {
-        // // Clear timerId
-        // timerId = undefined;
+        // Set limit of HTTP connection
+        currHttpConnectionLimit = httpConnectionLimit;
         // Open the server
         isOpen = true;
         // Set open/close indexes

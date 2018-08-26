@@ -64,6 +64,7 @@ try {
   const autoCloseMillis: number | undefined = args['auto-close-millis'];
   // Get open-knocking max interval mills
   const openKnockingMaxIntervalMillis: number | undefined = args['open-knocking-max-interval-millis'];
+  // TODO: Add option of http-connection-limit
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
