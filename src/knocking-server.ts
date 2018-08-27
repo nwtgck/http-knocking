@@ -49,7 +49,7 @@ class SingleTimer {
  * @param {number | undefined} httpRequestLimit
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, quiet: boolean = false) {
+export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, onUpgradeLimit: number | undefined = undefined, quiet: boolean = false) {
   // Create proxy instance
   const proxy = httpProxy.createServer(
     enableWebSocket ? {
@@ -70,7 +70,8 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
   let openKnockingMaxIntervalTimer: SingleTimer = new SingleTimer();
   // Current HTTP request limit
   let currHttpRequestLimit: number | undefined = undefined;
-  // TODO: Define WebSocket limit
+  // Current on-upgrade limit
+  let currOnUpgradeLimit: number | undefined = undefined;
 
   // Set open/close indexes
   function resetIdxs(){
@@ -102,6 +103,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       console.log(pathName);
     }
 
+    // If server reached HTTP request limit
     if(isOpen && currHttpRequestLimit !== undefined && currHttpRequestLimit <= 0) {
       // Close server
       closeServer();
@@ -138,6 +140,8 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       if (openKnockingIdx === openKnockingSeq.length) {
         // Set limit of HTTP request
         currHttpRequestLimit = httpRequestLimit;
+        // Set limit of on-upgrade limit
+        currOnUpgradeLimit   = onUpgradeLimit;
         // Open the server
         isOpen = true;
         // Set open/close indexes
@@ -162,6 +166,15 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
     // WebSocket server proxy
     server.on('upgrade', (req: http.IncomingMessage, socket: net.Socket, head: any) => {
       if (isOpen) {
+        if (currOnUpgradeLimit !== undefined) {
+          // Decrement on-upgrade limit
+          currOnUpgradeLimit--;
+          // If server reached on-upgrade limit
+          if (currOnUpgradeLimit <= 0) {
+            // Close server
+            closeServer();
+          }
+        }
         proxy.ws(req, socket, head);
       } else {
         // Close this connection
