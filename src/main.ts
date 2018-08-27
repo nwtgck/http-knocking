@@ -46,6 +46,10 @@ const parser = yargs
   .option("http-request-limit", {
     describe: 'Limit of HTTP request',
     demandOption: false,
+  })
+  .option("on-upgrade-limit", {
+    describe: 'Limit of on-upgrade (WebSocket)',
+    demandOption: false,
   });
 
 try {
@@ -70,6 +74,8 @@ try {
   const openKnockingMaxIntervalMillis: number | undefined = args['open-knocking-max-interval-millis'];
   // Get http-request-limit
   const httpRequestLimit: number | undefined = args['http-request-limit'];
+  // Get on-upgrade limit
+  const onUpgradeLimit: number | undefined   = args['on-upgrade-limit'];
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
@@ -80,7 +86,8 @@ try {
     enableWebSocket,
     autoCloseMillis,
     openKnockingMaxIntervalMillis,
-    httpRequestLimit
+    httpRequestLimit,
+    onUpgradeLimit
   );
 
   server.listen(port);
