@@ -511,8 +511,8 @@ describe("knockingServer", ()=>{
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
-      // HTTP connection limit
-      const httpConnectionLimit: number = 3;
+      // HTTP request limit
+      const httpRequestLimit: number = 3;
       const server = knockingServer.createKnockingServer(
         "localhost",
         targetServerPort,
@@ -521,7 +521,7 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         undefined,
-        httpConnectionLimit,
+        httpRequestLimit,
         true
       );
 
@@ -536,8 +536,8 @@ describe("knockingServer", ()=>{
         // NOTE: Don' use `assertKnockingServerIsOpen()` to check whether server is open or not
         //       because `assertKnockingServerIsOpen()` consumes connections.
 
-        // Connect Opened HTTP server `httpConnectionLimit`-times
-        for(let i = 0; i < httpConnectionLimit;i ++) {
+        // Connect Opened HTTP server `httpRequestLimit`-times
+        for(let i = 0; i < httpRequestLimit;i ++) {
           const res = await thenRequest("GET", `${knockingUrl}/`);
           assert.equal(res.statusCode, 200);
           assert.equal(res.getBody("UTF-8"), "This is top page!\n");

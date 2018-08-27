@@ -46,10 +46,10 @@ class SingleTimer {
  * @param {boolean} enableWebSocket
  * @param {number | undefined} autoCloseMillis
  * @param {number | undefined} openKnockingMaxIntervalMillis
- * @param {number | undefined} httpConnectionLimit
+ * @param {number | undefined} httpRequestLimit
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpConnectionLimit: number | undefined = undefined, quiet: boolean = false) {
+export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, quiet: boolean = false) {
   // Create proxy instance
   const proxy = httpProxy.createServer(
     enableWebSocket ? {
@@ -68,8 +68,8 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
   let autoCloseTimer: SingleTimer = new SingleTimer();
   // Timer of openKnockingMaxIntervalMillis
   let openKnockingMaxIntervalTimer: SingleTimer = new SingleTimer();
-  // Current HTTP connection limit
-  let currHttpConnectionLimit: number | undefined = undefined;
+  // Current HTTP request limit
+  let currHttpRequestLimit: number | undefined = undefined;
   // TODO: Define WebSocket limit
 
   // Set open/close indexes
@@ -102,7 +102,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       console.log(pathName);
     }
 
-    if(isOpen && currHttpConnectionLimit !== undefined && currHttpConnectionLimit <= 0) {
+    if(isOpen && currHttpRequestLimit !== undefined && currHttpRequestLimit <= 0) {
       // Close server
       closeServer();
     }
@@ -123,9 +123,9 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         }
         res.end();
       } else {
-        if (currHttpConnectionLimit !== undefined ) {
-          // Decrement limit of HTTP connection
-          currHttpConnectionLimit--;
+        if (currHttpRequestLimit !== undefined ) {
+          // Decrement limit of HTTP request
+          currHttpRequestLimit--;
         }
         // Use proxy
         proxy.web(req, res, {target: `http://${targetHost}:${targetPort}`});
@@ -136,8 +136,8 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       // Proceed open knocking
       openKnockingIdx++;
       if (openKnockingIdx === openKnockingSeq.length) {
-        // Set limit of HTTP connection
-        currHttpConnectionLimit = httpConnectionLimit;
+        // Set limit of HTTP request
+        currHttpRequestLimit = httpRequestLimit;
         // Open the server
         isOpen = true;
         // Set open/close indexes
