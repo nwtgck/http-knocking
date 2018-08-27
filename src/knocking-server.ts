@@ -103,12 +103,6 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       console.log(pathName);
     }
 
-    // If server reached HTTP request limit
-    if(isOpen && currHttpRequestLimit !== undefined && currHttpRequestLimit <= 0) {
-      // Close server
-      closeServer();
-    }
-
     // If server is available
     if (isOpen) {
       if (pathName === closeKnockingSeq[closeKnockingIdx]) {
@@ -128,6 +122,11 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         if (currHttpRequestLimit !== undefined ) {
           // Decrement limit of HTTP request
           currHttpRequestLimit--;
+          // If server reached HTTP request limit
+          if(currHttpRequestLimit <= 0) {
+            // Close server
+            closeServer();
+          }
         }
         // Use proxy
         proxy.web(req, res, {target: `http://${targetHost}:${targetPort}`});
