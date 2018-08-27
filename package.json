@@ -8,7 +8,7 @@
   "main": "dist/src/main.js",
   "types": "dist/src/main.d.ts",
   "scripts": {
-    "test": "mocha --require ts-node/register --timeout 10000 dist/test/*test.js",
+    "test": "mocha --require ts-node/register --timeout 10000 test/*test.ts",
     "build": "tsc",
     "start": "npm run build && node dist/src/main.js",
     "prepublish": "npm run build"
