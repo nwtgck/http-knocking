@@ -42,6 +42,14 @@ const parser = yargs
   .option("open-knocking-max-interval-millis", {
     describe: 'Time millis to reset open procedure',
     demandOption: false,
+  })
+  .option("http-request-limit", {
+    describe: 'Limit of HTTP request',
+    demandOption: false,
+  })
+  .option("on-upgrade-limit", {
+    describe: 'Limit of on-upgrade (WebSocket)',
+    demandOption: false,
   });
 
 try {
@@ -64,6 +72,10 @@ try {
   const autoCloseMillis: number | undefined = args['auto-close-millis'];
   // Get open-knocking max interval mills
   const openKnockingMaxIntervalMillis: number | undefined = args['open-knocking-max-interval-millis'];
+  // Get http-request-limit
+  const httpRequestLimit: number | undefined = args['http-request-limit'];
+  // Get on-upgrade limit
+  const onUpgradeLimit: number | undefined   = args['on-upgrade-limit'];
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
@@ -73,7 +85,9 @@ try {
     closeKnockingSeq,
     enableWebSocket,
     autoCloseMillis,
-    openKnockingMaxIntervalMillis
+    openKnockingMaxIntervalMillis,
+    httpRequestLimit,
+    onUpgradeLimit
   );
 
   server.listen(port);

@@ -46,9 +46,10 @@ class SingleTimer {
  * @param {boolean} enableWebSocket
  * @param {number | undefined} autoCloseMillis
  * @param {number | undefined} openKnockingMaxIntervalMillis
+ * @param {number | undefined} httpRequestLimit
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, quiet: boolean = false) {
+export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, onUpgradeLimit: number | undefined = undefined, quiet: boolean = false) {
   // Create proxy instance
   const proxy = httpProxy.createServer(
     enableWebSocket ? {
@@ -67,6 +68,10 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
   let autoCloseTimer: SingleTimer = new SingleTimer();
   // Timer of openKnockingMaxIntervalMillis
   let openKnockingMaxIntervalTimer: SingleTimer = new SingleTimer();
+  // Current HTTP request limit
+  let currHttpRequestLimit: number | undefined = undefined;
+  // Current on-upgrade limit
+  let currOnUpgradeLimit: number | undefined = undefined;
 
   // Set open/close indexes
   function resetIdxs(){
@@ -74,14 +79,17 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
     closeKnockingIdx = 0;
   }
 
+  // Close server
+  function closeServer(): void {
+    // Close
+    isOpen = false;
+    // Set open/close indexes
+    resetIdxs();
+  }
+
   // Set timer
   function setCloseTimerIfDefined(timer: SingleTimer, millis: number | undefined): void {
-    timer.timeout(() => {
-      // Close
-      isOpen = false;
-      // Set open/close indexes
-      resetIdxs();
-    }, millis);
+    timer.timeout(closeServer, millis);
   }
 
   // HTTP Reverse Proxy Server
@@ -111,6 +119,15 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         }
         res.end();
       } else {
+        if (currHttpRequestLimit !== undefined ) {
+          // Decrement limit of HTTP request
+          currHttpRequestLimit--;
+          // If server reached HTTP request limit
+          if(currHttpRequestLimit <= 0) {
+            // Close server
+            closeServer();
+          }
+        }
         // Use proxy
         proxy.web(req, res, {target: `http://${targetHost}:${targetPort}`});
       }
@@ -120,8 +137,10 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       // Proceed open knocking
       openKnockingIdx++;
       if (openKnockingIdx === openKnockingSeq.length) {
-        // // Clear timerId
-        // timerId = undefined;
+        // Set limit of HTTP request
+        currHttpRequestLimit = httpRequestLimit;
+        // Set limit of on-upgrade limit
+        currOnUpgradeLimit   = onUpgradeLimit;
         // Open the server
         isOpen = true;
         // Set open/close indexes
@@ -146,6 +165,15 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
     // WebSocket server proxy
     server.on('upgrade', (req: http.IncomingMessage, socket: net.Socket, head: any) => {
       if (isOpen) {
+        if (currOnUpgradeLimit !== undefined) {
+          // Decrement on-upgrade limit
+          currOnUpgradeLimit--;
+          // If server reached on-upgrade limit
+          if (currOnUpgradeLimit <= 0) {
+            // Close server
+            closeServer();
+          }
+        }
         proxy.ws(req, socket, head);
       } else {
         // Close this connection
