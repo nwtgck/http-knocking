@@ -1,7 +1,7 @@
 # http-knocking
 
 [![NpmVersion](https://img.shields.io/npm/v/http-knocking.svg)](https://www.npmjs.com/package/http-knocking)
- [![Build Status](https://travis-ci.com/nwtgck/http-knocking.svg?branch=develop)](https://travis-ci.com/nwtgck/http-knocking) [![Docker Automated build](https://img.shields.io/docker/automated/nwtgck/http-knocking.svg)](https://hub.docker.com/r/nwtgck/http-knocking/) [![](https://images.microbadger.com/badges/image/nwtgck/http-knocking.svg)](https://microbadger.com/images/nwtgck/http-knocking "Get your own image badge on microbadger.com")
+ [![Build Status](https://travis-ci.com/nwtgck/http-knocking.svg?branch=develop)](https://travis-ci.com/nwtgck/http-knocking) [![Docker Automated build](https://img.shields.io/docker/automated/nwtgck/http-knocking.svg)](https://hub.docker.com/r/nwtgck/http-knocking/) [![](https://images.microbadger.com/badges/image/nwtgck/http-knocking.svg)](https://microbadger.com/images/nwtgck/http-knocking "Get your own image badge on microbadger.com") [![Greenkeeper badge](https://badges.greenkeeper.io/nwtgck/http-knocking.svg)](https://greenkeeper.io/)
 
 HTTP knocking is like port knocking. It hides your server, and allows you to open/close the server by certain knocking.   
 In HTTPS communication, knocking is hidden because of encryption unlike port knocking.
@@ -35,7 +35,7 @@ Here is a `docker-compose.yml` to run [Ghost](https://ghost.org/) on http-knocki
 version: '3.1'
 services:
   http-knocking:
-    image: nwtgck/http-knocking:v0.3.0
+    image: nwtgck/http-knocking:v0.3.1
     ports:
       - '8282:8282'
     depends_on:
@@ -67,7 +67,11 @@ Options:
   --enable-websocket                   Enable WebSocket proxy   [default: false]
   --auto-close-millis                  Time millis to close automatically
   --open-knocking-max-interval-millis  Time millis to reset open procedure
+  --http-request-limit                 Limit of HTTP request
+  --on-upgrade-limit                   Limit of on-upgrade (WebSocket)
 ```
 
  `--auto-close-millis` option makes your server more secure because it closes automatically by time.  
- `--open-knocking-max-interval-millis` option also makes your server more secure because it reset open procedure by time.
+ `--open-knocking-max-interval-millis` option also makes your server more secure because it reset open procedure by time.  
+ `--http-request-limit` restricts the number of HTTP requests after knocking server opening.  
+ `--on-upgrade-limit` restricts the number of on-upgrade (WebSocket) after knocking server opening.  

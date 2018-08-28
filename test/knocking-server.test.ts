@@ -26,7 +26,7 @@ async function assertKnockingServerIsOpen(knockingPort: number): Promise<void> {
   assert.equal(res.statusCode, 200);
   assert.equal(res.getBody("UTF-8"), "This is about page\n");
 
-  let ws: WebSocket;
+  let ws: WebSocket | undefined = undefined;
   try {
     ws = new WebSocket(`ws://localhost:${knockingPort}`);
     // Wait for open
@@ -38,7 +38,7 @@ async function assertKnockingServerIsOpen(knockingPort: number): Promise<void> {
     // Ensure the response is "<message>+!!"
     assert.equal(data, "hello!!");
   } finally {
-    if(ws) {
+    if(ws !== undefined) {
       // Close ws
       await testUtil.wsClosePromise(ws);
     }
@@ -130,6 +130,8 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         undefined,
+        undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -152,6 +154,8 @@ describe("knockingServer", ()=>{
         openKnockingSeq,
         closeKnockingSeq,
         true,
+        undefined,
+        undefined,
         undefined,
         undefined,
         true
@@ -195,6 +199,8 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         undefined,
+        undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -232,6 +238,8 @@ describe("knockingServer", ()=>{
         openKnockingSeq,
         closeKnockingSeq,
         true,
+        undefined,
+        undefined,
         undefined,
         undefined,
         true
@@ -289,6 +297,8 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         undefined,
+        undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -338,6 +348,8 @@ describe("knockingServer", ()=>{
         true,
         5000, // 5sec
         undefined,
+        undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -380,6 +392,8 @@ describe("knockingServer", ()=>{
         closeKnockingSeq,
         true,
         5000, // 5sec
+        undefined,
+        undefined,
         undefined,
         true
       );
@@ -431,6 +445,8 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         2000, // 2sec
+        undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -466,6 +482,8 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         2000, // 2sec
+        undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -493,6 +511,114 @@ describe("knockingServer", ()=>{
         await assertKnockingServerIsOpen(knockingPort);
 
       } finally {
+        await server.close();
+      }
+    });
+
+    it("should connect restricted number of HTTP requests", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      // HTTP request limit
+      const httpRequestLimit: number = 3;
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        undefined,
+        undefined,
+        httpRequestLimit,
+        undefined,
+        true
+      );
+
+      await server.listen(knockingPort);
+
+      try {
+        // Open knocking server
+        await thenRequest("GET", `${knockingUrl}/82`);
+        await thenRequest("GET", `${knockingUrl}/delta`);
+        await thenRequest("GET", `${knockingUrl}/echo`);
+
+        // NOTE: Don' use `assertKnockingServerIsOpen()` to check whether server is open or not
+        //       because `assertKnockingServerIsOpen()` consumes connections.
+
+        // Connect Opened HTTP server `httpRequestLimit`-times
+        for(let i = 0; i < httpRequestLimit;i ++) {
+          const res = await thenRequest("GET", `${knockingUrl}/`);
+          assert.equal(res.statusCode, 200);
+          assert.equal(res.getBody("UTF-8"), "This is top page!\n");
+        }
+
+        // Assert the knocking server is closed
+        await assertKnockingServerIsClosed(knockingPort);
+
+      } finally  {
+        // // Close the server
+        await server.close();
+      }
+    });
+
+    it("should connect restricted number of on-upgrade", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      // On-upgrade limit
+      const onUpgradeRequestLimit: number = 3;
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        undefined,
+        undefined,
+        undefined,
+        onUpgradeRequestLimit,
+        true
+      );
+
+      await server.listen(knockingPort);
+
+      try {
+        // Open knocking server
+        await thenRequest("GET", `${knockingUrl}/82`);
+        await thenRequest("GET", `${knockingUrl}/delta`);
+        await thenRequest("GET", `${knockingUrl}/echo`);
+
+        // NOTE: Don' use `assertKnockingServerIsOpen()` to check whether server is open or not
+        //       because `assertKnockingServerIsOpen()` consumes connections.
+
+        // Connect Opened HTTP server `onUpgradeRequestLimit`-times
+        for(let i = 0; i < onUpgradeRequestLimit;i ++) {
+          let ws: WebSocket | undefined = undefined;
+          try {
+            ws = new WebSocket(`ws://localhost:${knockingPort}`);
+            // Wait for open
+            await testUtil.wsOnOpenPromise(ws);
+            // Send a message
+            ws.send("hello");
+            // Wait for a response
+            const data = await testUtil.wsOnMessagePromise(ws);
+            // Ensure the response is "<message>+!!"
+            assert.equal(data, "hello!!");
+          } finally {
+            if(ws !== undefined) {
+              // Close ws
+              await testUtil.wsClosePromise(ws);
+            }
+          }
+        }
+
+        // Assert the knocking server is closed
+        await assertKnockingServerIsClosed(knockingPort);
+
+      } finally  {
+        // // Close the server
         await server.close();
       }
     });
