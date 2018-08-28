@@ -1,6 +1,6 @@
 {
   "name": "http-knocking",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "HTTP knocking like port knocking",
   "bin": {
     "http-knocking": "dist/src/main.js"
