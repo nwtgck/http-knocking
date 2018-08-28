@@ -132,6 +132,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        false,
         true
       );
       await server.listen(knockingPort);
@@ -158,6 +159,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        false,
         true
       );
 
@@ -201,6 +203,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        false,
         true
       );
       await server.listen(knockingPort);
@@ -242,6 +245,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        false,
         true
       );
       await server.listen(knockingPort);
@@ -299,6 +303,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        false,
         true
       );
       await server.listen(knockingPort);
@@ -350,6 +355,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        false,
         true
       );
       await server.listen(knockingPort);
@@ -395,6 +401,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        false,
         true
       );
       await server.listen(knockingPort);
@@ -447,6 +454,7 @@ describe("knockingServer", ()=>{
         2000, // 2sec
         undefined,
         undefined,
+        false,
         true
       );
       await server.listen(knockingPort);
@@ -484,6 +492,7 @@ describe("knockingServer", ()=>{
         2000, // 2sec
         undefined,
         undefined,
+        false,
         true
       );
       await server.listen(knockingPort);
@@ -532,6 +541,7 @@ describe("knockingServer", ()=>{
         undefined,
         httpRequestLimit,
         undefined,
+        false,
         true
       );
 
@@ -579,6 +589,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         onUpgradeRequestLimit,
+        false,
         true
       );
 
