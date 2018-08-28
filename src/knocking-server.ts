@@ -4,6 +4,13 @@ import * as url from "url";
 import * as net from "net";
 
 /**
+ * Type which has optional property
+ */
+type OptionalProperty<T> = {
+  [K in keyof T]: T[K] | undefined;
+};
+
+/**
  * Single timer which ensure that only timer is active
  */
 class SingleTimer {
@@ -34,6 +41,27 @@ class SingleTimer {
       // Cancel the timer
       clearTimeout(this.timerId)
     }
+  }
+}
+
+/**
+ * Optional property
+ * @param obj
+ */
+function opt<T>(obj: T | null | undefined): OptionalProperty<T> {
+  return obj || ({} as OptionalProperty<T>);
+}
+
+/**
+ * Mapping for optional
+ * @param f
+ * @param obj
+ */
+function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProperty<S> {
+  if (obj === null || obj === undefined) {
+    return {} as OptionalProperty<S>;
+  } else {
+    return f(obj);
   }
 }
 
@@ -95,9 +123,11 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
   // HTTP Reverse Proxy Server
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     // Get path name
-    const pathName = url.parse(req.url).pathname
-      // Remove last "/"
-      .replace(/\/$/, "");
+    const pathName =
+      opt(optMap(url.parse, opt(req.url)).pathname)
+        // Remove last "/"
+        .replace(/\/$/, "");
+
     if(!quiet) {
       // Print path name
       console.log(pathName);
