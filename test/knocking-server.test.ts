@@ -133,6 +133,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         false,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -160,6 +161,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         false,
+        undefined,
         true
       );
 
@@ -204,6 +206,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         false,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -246,6 +249,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         false,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -304,6 +308,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         false,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -356,6 +361,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         false,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -402,6 +408,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         false,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -455,6 +462,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         false,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -493,6 +501,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         false,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -542,6 +551,7 @@ describe("knockingServer", ()=>{
         httpRequestLimit,
         undefined,
         false,
+        undefined,
         true
       );
 
@@ -590,6 +600,7 @@ describe("knockingServer", ()=>{
         undefined,
         onUpgradeRequestLimit,
         false,
+        undefined,
         true
       );
 
@@ -639,8 +650,7 @@ describe("knockingServer", ()=>{
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
-      // On-upgrade limit
-      const onUpgradeRequestLimit: number = 3;
+      const fakeNginxVersion: string = "1.15.1";
       const server = knockingServer.createKnockingServer(
         "localhost",
         targetServerPort,
@@ -650,19 +660,19 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        onUpgradeRequestLimit,
+        undefined,
         true,
+        fakeNginxVersion,
         true
       );
 
       // Response string of Nginx "Internal Server Error"
-      // TODO: Extract Nginx version
       // TODO: "a padding to disable MSIE and Chrome friendly error page" test
       function getInternalServerErrorRes(): string {
         // (INFO: Ruby one-liner(localhost:8181 is an actual Nginx Server): puts `curl -i -H 'User-Agent: Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1)' localhost:8081`.split("\r\n").map{|e| (e+"\r\n").inspect}.join(" +\n"))
         return (
           "HTTP/1.1 500 Internal Server Error\r\n" +
-          "Server: nginx/1.15.2\r\n" +
+          `Server: nginx/${fakeNginxVersion}\r\n` +
           `Date: ${new Date().toUTCString()}\r\n` +
           "Content-Type: text/html\r\n" +
           "Content-Length: 595\r\n" +
@@ -672,7 +682,7 @@ describe("knockingServer", ()=>{
           "<head><title>500 Internal Server Error</title></head>\r\n" +
           "<body bgcolor=\"white\">\r\n" +
           "<center><h1>500 Internal Server Error</h1></center>\r\n" +
-          "<hr><center>nginx/1.15.2</center>\r\n" +
+          `<hr><center>nginx/${fakeNginxVersion}</center>\r\n` +
           "</body>\r\n" +
           "</html>\r\n" +
           "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +

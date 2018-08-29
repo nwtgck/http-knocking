@@ -2,6 +2,7 @@ import * as httpProxy from "http-proxy";
 import * as http from "http";
 import * as url from "url";
 import * as net from "net";
+import * as assert from "assert";
 
 import * as fakeResGenerator from "./fake-response-generator";
 
@@ -79,9 +80,15 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
  * @param {number | undefined} httpRequestLimit
  * @param {number | undefined} onUpgradeLimit
  * @param {boolean} fakeNginx
+ * @param {string| undefined} fakeNginxVersion
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, onUpgradeLimit: number | undefined = undefined, fakeNginx: boolean = false, quiet: boolean = false) {
+export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, onUpgradeLimit: number | undefined = undefined, fakeNginx: boolean = false, fakeNginxVersion: string | undefined = undefined, quiet: boolean = false) {
+
+  if (fakeNginx) {
+    assert(fakeNginxVersion !== undefined, "fakeNginxVersion is required when fakeNginx is enable");
+  }
+
   // Create proxy instance
   const proxy = httpProxy.createServer(
     enableWebSocket ? {
@@ -190,7 +197,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         // If fakeNginx is enable
         if (fakeNginx) {
           // Return fake Nginx response
-          fakeResGenerator.nginx(res);
+          fakeResGenerator.nginx(res, fakeNginxVersion as string); // NOTE: Safe casting because of assert
         }
       }
 
@@ -199,7 +206,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       // If fakeNginx is enable
       if (fakeNginx) {
         // Return fake Nginx response
-        fakeResGenerator.nginx(res);
+        fakeResGenerator.nginx(res, fakeNginxVersion as string); // NOTE: Safe casting because of assert
       }
       // Do nothing
       res.end();
