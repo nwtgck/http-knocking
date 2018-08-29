@@ -656,11 +656,32 @@ describe("knockingServer", ()=>{
       );
 
       // Response string of Nginx "Internal Server Error"
-      // TODO: Improve readability
       // TODO: Extract Nginx version
       // TODO: "a padding to disable MSIE and Chrome friendly error page" test
       function getInternalServerErrorRes(): string {
-        return `HTTP/1.1 500 Internal Server Error\r\nServer: nginx/1.15.2\r\nDate: ${new Date().toUTCString()}\r\nContent-Type: text/html\r\nContent-Length: 595\r\nConnection: close\r\n\r\n<html>\r\n<head><title>500 Internal Server Error</title></head>\r\n<body bgcolor=\"white\">\r\n<center><h1>500 Internal Server Error</h1></center>\r\n<hr><center>nginx/1.15.2</center>\r\n</body>\r\n</html>\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n`;
+        // (INFO: Ruby one-liner(localhost:8181 is an actual Nginx Server): puts `curl -i -H 'User-Agent: Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1)' localhost:8081`.split("\r\n").map{|e| (e+"\r\n").inspect}.join(" +\n"))
+        return (
+          "HTTP/1.1 500 Internal Server Error\r\n" +
+          "Server: nginx/1.15.2\r\n" +
+          `Date: ${new Date().toUTCString()}\r\n` +
+          "Content-Type: text/html\r\n" +
+          "Content-Length: 595\r\n" +
+          "Connection: close\r\n" +
+          "\r\n" +
+          "<html>\r\n" +
+          "<head><title>500 Internal Server Error</title></head>\r\n" +
+          "<body bgcolor=\"white\">\r\n" +
+          "<center><h1>500 Internal Server Error</h1></center>\r\n" +
+          "<hr><center>nginx/1.15.2</center>\r\n" +
+          "</body>\r\n" +
+          "</html>\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n"
+        )
       }
 
       await server.listen(knockingPort);
