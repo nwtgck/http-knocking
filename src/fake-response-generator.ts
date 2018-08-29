@@ -1,7 +1,7 @@
 import * as http from "http";
+import * as useragent from "useragent";
 
-export function nginx(res: http.ServerResponse, nginxVersion: string): void {
-  // TODO: Hard code "<!-- a padding to disable MSIE and Chrome friendly error page -->"
+export function nginx(res: http.ServerResponse, nginxVersion: string, userAgent: string): void {
   // (INFO: Ruby one-liner(localhost:8181 is an actual Nginx Server): puts `curl -i -H 'User-Agent: Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1)' localhost:8081`.split("\r\n").map{|e| (e+"\r\n").inspect}.join(" +\n"))
   const body =
     "<html>\r\n" +
@@ -11,12 +11,17 @@ export function nginx(res: http.ServerResponse, nginxVersion: string): void {
     `<hr><center>nginx/${nginxVersion}</center>\r\n` +
     "</body>\r\n" +
     "</html>\r\n" +
-    "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
-    "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
-    "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
-    "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
-    "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
-    "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n";
+    (
+      useragent.is(userAgent).ie && useragent.is(userAgent).chrome ?
+      "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+      "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+      "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+      "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+      "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+      "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" :
+
+      ""
+    );
 
   res.shouldKeepAlive = false;
   res.writeHead(500, "Internal Server Error", {

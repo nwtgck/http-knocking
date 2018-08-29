@@ -69,6 +69,14 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
 }
 
 /**
+ * Get user agent from HTTP request
+ * @param req
+ */
+function getUserAgent(req: http.IncomingMessage): string | undefined {
+  return req.headers["user-agent"]  as (string | undefined) || ""; // NOTE: type of "user-agent" should be string not string[]
+}
+
+/**
  * Run the knocking
  * @param {string} targetHost
  * @param {number} targetPort
@@ -197,7 +205,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         // If fakeNginx is enable
         if (fakeNginx) {
           // Return fake Nginx response
-          fakeResGenerator.nginx(res, fakeNginxVersion as string); // NOTE: Safe casting because of assert
+          fakeResGenerator.nginx(res, fakeNginxVersion as string, getUserAgent(req) || ""); // NOTE: Safe casting because of assert
         }
       }
 
@@ -206,7 +214,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       // If fakeNginx is enable
       if (fakeNginx) {
         // Return fake Nginx response
-        fakeResGenerator.nginx(res, fakeNginxVersion as string); // NOTE: Safe casting because of assert
+        fakeResGenerator.nginx(res, fakeNginxVersion as string, getUserAgent(req) || ""); // NOTE: Safe casting because of assert
       }
       // Do nothing
       res.end();

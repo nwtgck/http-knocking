@@ -667,15 +667,14 @@ describe("knockingServer", ()=>{
       );
 
       // Response string of Nginx "Internal Server Error"
-      // TODO: "a padding to disable MSIE and Chrome friendly error page" test
       function getInternalServerErrorRes(): string {
-        // (INFO: Ruby one-liner(localhost:8181 is an actual Nginx Server): puts `curl -i -H 'User-Agent: Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1)' localhost:8081`.split("\r\n").map{|e| (e+"\r\n").inspect}.join(" +\n"))
+        // (INFO: Ruby one-liner(localhost:8181 is an actual Nginx Server): puts `curl -i localhost:8081`.split("\r\n").map{|e| (e+"\r\n").inspect}.join(" +\n")
         return (
           "HTTP/1.1 500 Internal Server Error\r\n" +
           `Server: nginx/${fakeNginxVersion}\r\n` +
           `Date: ${new Date().toUTCString()}\r\n` +
           "Content-Type: text/html\r\n" +
-          "Content-Length: 595\r\n" +
+          "Content-Length: 193\r\n" +
           "Connection: close\r\n" +
           "\r\n" +
           "<html>\r\n" +
@@ -684,13 +683,7 @@ describe("knockingServer", ()=>{
           "<center><h1>500 Internal Server Error</h1></center>\r\n" +
           `<hr><center>nginx/${fakeNginxVersion}</center>\r\n` +
           "</body>\r\n" +
-          "</html>\r\n" +
-          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
-          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
-          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
-          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
-          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
-          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n"
+          "</html>\r\n"
         )
       }
 
