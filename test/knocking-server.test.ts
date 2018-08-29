@@ -634,6 +634,95 @@ describe("knockingServer", ()=>{
       }
     });
 
+    it("should return fake Nginx Internal Server Error", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      // On-upgrade limit
+      const onUpgradeRequestLimit: number = 3;
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        undefined,
+        undefined,
+        undefined,
+        onUpgradeRequestLimit,
+        true,
+        true
+      );
+
+      // Response string of Nginx "Internal Server Error"
+      // TODO: Improve readability
+      // TODO: Extract Nginx version
+      // TODO: "a padding to disable MSIE and Chrome friendly error page" test
+      function getInternalServerErrorRes(): string {
+        return `HTTP/1.1 500 Internal Server Error\r\nServer: nginx/1.15.2\r\nDate: ${new Date().toUTCString()}\r\nContent-Type: text/html\r\nContent-Length: 595\r\nConnection: close\r\n\r\n<html>\r\n<head><title>500 Internal Server Error</title></head>\r\n<body bgcolor=\"white\">\r\n<center><h1>500 Internal Server Error</h1></center>\r\n<hr><center>nginx/1.15.2</center>\r\n</body>\r\n</html>\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n`;
+      }
+
+      await server.listen(knockingPort);
+
+      // Assert server is closed
+      async function assertClosedForFakeNginx(): Promise<void> {
+        let resBuffer: Buffer;
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/");
+        // Response should be Nginx "Internal Server Error"
+        assert.equal(resBuffer.toString(), getInternalServerErrorRes());
+
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/about");
+        // Response should be Nginx "Internal Server Error"
+        assert.equal(resBuffer.toString(), getInternalServerErrorRes());
+      }
+
+      try {
+        let resBuffer: Buffer;
+        let res;
+
+        // Assert server is closed
+        await assertClosedForFakeNginx();
+
+        // === Begin open sequence ===
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/82");
+        // Response should be Nginx "Internal Server Error"
+        assert.equal(resBuffer.toString(), getInternalServerErrorRes());
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/delta");
+        // Response should be Nginx "Internal Server Error"
+        assert.equal(resBuffer.toString(), getInternalServerErrorRes());
+        res = await thenRequest("GET", `${knockingUrl}/echo`);
+        // Response should be "Open"
+        assert.equal(res.getBody("UTF-8"), "Open\n");
+        // === End open sequence ===
+
+        // Assert the knocking server is open
+        await assertKnockingServerIsOpen(knockingPort);
+
+        res = await thenRequest("GET", `${knockingUrl}/alpha`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/one`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/one`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/three`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "Closed\n");
+
+        // Assert server is closed
+        await assertClosedForFakeNginx();
+
+      } finally {
+        await server.close();
+      }
+    });
+
   });
 
 });

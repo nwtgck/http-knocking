@@ -186,14 +186,21 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       } else {
         // Set knocking-max-interval timer if millis are defined
         setCloseTimerIfDefined(openKnockingMaxIntervalTimer, openKnockingMaxIntervalMillis);
+
+        // If fakeNginx is enable
+        if (fakeNginx) {
+          // Return fake Nginx response
+          fakeResGenerator.nginx(res);
+        }
       }
+
+      res.end();
+    } else {
       // If fakeNginx is enable
       if (fakeNginx) {
         // Return fake Nginx response
         fakeResGenerator.nginx(res);
       }
-      res.end();
-    } else {
       // Do nothing
       res.end();
     }
