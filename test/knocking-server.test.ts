@@ -747,6 +747,86 @@ describe("knockingServer", ()=>{
       }
     });
 
+    it("should return fake Nginx Internal Server Error with padding", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      const fakeNginxVersion: string = "1.15.1";
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true,
+        fakeNginxVersion,
+        true
+      );
+
+      // Response string of Nginx "Internal Server Error" with padding
+      function getInternalServerErrorRes(): string {
+        // (INFO: Ruby one-liner(localhost:8181 is an actual Nginx Server): puts `curl -i -H 'User-Agent: Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1)' localhost:8081`.split("\r\n").map{|e| (e+"\r\n").inspect}.join(" +\n")
+        return (
+          "HTTP/1.1 500 Internal Server Error\r\n" +
+          `Server: nginx/${fakeNginxVersion}\r\n` +
+          `Date: ${new Date().toUTCString()}\r\n` +
+          "Content-Type: text/html\r\n" +
+          "Content-Length: 595\r\n" +
+          "Connection: close\r\n" +
+          "\r\n" +
+          "<html>\r\n" +
+          "<head><title>500 Internal Server Error</title></head>\r\n" +
+          "<body bgcolor=\"white\">\r\n" +
+          "<center><h1>500 Internal Server Error</h1></center>\r\n" +
+          `<hr><center>nginx/${fakeNginxVersion}</center>\r\n` +
+          "</body>\r\n" +
+          "</html>\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
+          "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n"
+        )
+      }
+
+      await server.listen(knockingPort);
+
+      // Assert server is closed
+      async function assertClosedForFakeNginx(headers: {[header: string]: string}): Promise<void> {
+        let resBuffer: Buffer;
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/", headers);
+        // Response should be Nginx "Internal Server Error"
+        assert.equal(resBuffer.toString(), getInternalServerErrorRes());
+
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/about", headers);
+        // Response should be Nginx "Internal Server Error"
+        assert.equal(resBuffer.toString(), getInternalServerErrorRes());
+      }
+
+      try {
+        // Assert server is closed with padding
+        await assertClosedForFakeNginx({
+          // IE
+          "User-Agent": "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1)"
+        });
+
+        // Assert server is closed with padding
+        await assertClosedForFakeNginx({
+          // Chrome
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36"
+        });
+
+      } finally {
+        await server.close();
+      }
+    });
+
   });
 
 });

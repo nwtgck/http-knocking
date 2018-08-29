@@ -2,7 +2,7 @@ import * as http from "http";
 import * as useragent from "useragent";
 
 export function nginx(res: http.ServerResponse, nginxVersion: string, userAgent: string): void {
-  // (INFO: Ruby one-liner(localhost:8181 is an actual Nginx Server): puts `curl -i -H 'User-Agent: Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1)' localhost:8081`.split("\r\n").map{|e| (e+"\r\n").inspect}.join(" +\n"))
+  // (INFO: Ruby one-liner(localhost:8181 is an actual Nginx Server): puts `curl -i -H 'User-Agent: Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1)' localhost:8081`.split("\r\n").map{|e| (e+"\r\n").inspect}.join(" +\n")
   const body =
     "<html>\r\n" +
     "<head><title>500 Internal Server Error</title></head>\r\n" +
@@ -12,7 +12,7 @@ export function nginx(res: http.ServerResponse, nginxVersion: string, userAgent:
     "</body>\r\n" +
     "</html>\r\n" +
     (
-      useragent.is(userAgent).ie && useragent.is(userAgent).chrome ?
+      useragent.is(userAgent).ie || useragent.is(userAgent).chrome ?
       "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
       "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
       "<!-- a padding to disable MSIE and Chrome friendly error page -->\r\n" +
