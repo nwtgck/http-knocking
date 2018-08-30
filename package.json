@@ -1,6 +1,6 @@
 {
   "name": "http-knocking",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "HTTP knocking like port knocking",
   "keywords": [
     "http",
