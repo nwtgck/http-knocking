@@ -87,14 +87,14 @@ function getUserAgent(req: http.IncomingMessage): string | undefined {
  * @param {number | undefined} openKnockingMaxIntervalMillis
  * @param {number | undefined} httpRequestLimit
  * @param {number | undefined} onUpgradeLimit
- * @param {boolean} fakeNginx
+ * @param {boolean} enableFakeNginx
  * @param {string| undefined} fakeNginxVersion
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, onUpgradeLimit: number | undefined = undefined, fakeNginx: boolean = false, fakeNginxVersion: string | undefined = undefined, quiet: boolean = false) {
+export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, onUpgradeLimit: number | undefined = undefined, enableFakeNginx: boolean = false, fakeNginxVersion: string | undefined = undefined, quiet: boolean = false) {
 
-  if (fakeNginx) {
-    assert(fakeNginxVersion !== undefined, "fakeNginxVersion is required when fakeNginx is enable");
+  if (enableFakeNginx) {
+    assert(fakeNginxVersion !== undefined, "fakeNginxVersion is required when fake Nginx is enable");
   }
 
   // Create proxy instance
@@ -203,7 +203,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         setCloseTimerIfDefined(openKnockingMaxIntervalTimer, openKnockingMaxIntervalMillis);
 
         // If fakeNginx is enable
-        if (fakeNginx) {
+        if (enableFakeNginx) {
           // Return fake Nginx response
           fakeResGenerator.nginx(res, fakeNginxVersion as string, getUserAgent(req) || ""); // NOTE: Safe casting because of assert
         }
@@ -212,7 +212,7 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       res.end();
     } else {
       // If fakeNginx is enable
-      if (fakeNginx) {
+      if (enableFakeNginx) {
         // Return fake Nginx response
         fakeResGenerator.nginx(res, fakeNginxVersion as string, getUserAgent(req) || ""); // NOTE: Safe casting because of assert
       }
