@@ -1,5 +1,6 @@
 import * as websocket from 'websocket';
 import * as WebSocket from 'ws';
+import * as net from 'net';
 
 // Sleep
 // (from: https://qiita.com/yuba/items/2b17f9ac188e5138319c)
@@ -90,5 +91,40 @@ export function wsIsConnectedPromise(url: string): Promise<boolean> {
       resolve(false);
     });
     wsClient.connect(url);
+  });
+}
+
+
+/**
+ * Request HTTP Get and get whole HTTP response including both head and body
+ * @param host
+ * @param port
+ * @param getPath
+ * @param headers
+ */
+export function httpGet(host: string, port: number, getPath: string, headers: {[head: string]: string}={}): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    const buffers: Buffer[] = [];
+    const client = new net.Socket();
+    client.connect(port, host, ()=>{
+      client.write(`GET ${getPath} HTTP/1.0\n`);
+      client.write(`Host: ${host}\n`);
+      for(let header in headers) {
+        client.write(`${header}: ${headers[header]}`)
+      }
+      client.write("\n\n");
+    });
+    client.on('data', (data)=>{
+      buffers.push(data);
+    });
+    client.on('close', (hadError)=>{
+      if(!hadError) {
+        // (from: https://stackoverflow.com/a/10356183/2885946)
+        resolve(Buffer.concat(buffers))
+      }
+    });
+    client.on('error', (err: Error)=>{
+      reject(err);
+    });
   });
 }

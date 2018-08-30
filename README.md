@@ -69,9 +69,15 @@ Options:
   --open-knocking-max-interval-millis  Time millis to reset open procedure
   --http-request-limit                 Limit of HTTP request
   --on-upgrade-limit                   Limit of on-upgrade (WebSocket)
+  --enable-fake-nginx                  Enable fake Nginx Internal Server Error
+                                       response                 [default: false]
+  --fake-nginx-version                 Nginx version in fake Nginx Internal
+                                       Server Error response [default: "1.15.2"]
 ```
 
  `--auto-close-millis` option makes your server more secure because it closes automatically by time.  
  `--open-knocking-max-interval-millis` option also makes your server more secure because it reset open procedure by time.  
  `--http-request-limit` restricts the number of HTTP requests after knocking server opening.  
  `--on-upgrade-limit` restricts the number of on-upgrade (WebSocket) after knocking server opening.  
+ `--enable-fake-nginx` option fakes server response like "Nginx Internal Server Error" in when ther knocking server is closed.    
+ `--fake-nginx-version` option specifies Nginx version used in fake "Internal Server Error" response.      

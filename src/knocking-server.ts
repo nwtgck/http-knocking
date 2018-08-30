@@ -2,6 +2,9 @@ import * as httpProxy from "http-proxy";
 import * as http from "http";
 import * as url from "url";
 import * as net from "net";
+import * as assert from "assert";
+
+import * as fakeResGenerator from "./fake-response-generator";
 
 /**
  * Type which has optional property
@@ -66,6 +69,14 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
 }
 
 /**
+ * Get user agent from HTTP request
+ * @param req
+ */
+function getUserAgent(req: http.IncomingMessage): string | undefined {
+  return req.headers["user-agent"]  as (string | undefined) || ""; // NOTE: type of "user-agent" should be string not string[]
+}
+
+/**
  * Run the knocking
  * @param {string} targetHost
  * @param {number} targetPort
@@ -75,9 +86,17 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
  * @param {number | undefined} autoCloseMillis
  * @param {number | undefined} openKnockingMaxIntervalMillis
  * @param {number | undefined} httpRequestLimit
+ * @param {number | undefined} onUpgradeLimit
+ * @param {boolean} enableFakeNginx
+ * @param {string| undefined} fakeNginxVersion
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, onUpgradeLimit: number | undefined = undefined, quiet: boolean = false) {
+export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, onUpgradeLimit: number | undefined = undefined, enableFakeNginx: boolean = false, fakeNginxVersion: string | undefined = undefined, quiet: boolean = false) {
+
+  if (enableFakeNginx) {
+    assert(fakeNginxVersion !== undefined, "fakeNginxVersion is required when fake Nginx is enable");
+  }
+
   // Create proxy instance
   const proxy = httpProxy.createServer(
     enableWebSocket ? {
@@ -182,9 +201,21 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
       } else {
         // Set knocking-max-interval timer if millis are defined
         setCloseTimerIfDefined(openKnockingMaxIntervalTimer, openKnockingMaxIntervalMillis);
+
+        // If fakeNginx is enable
+        if (enableFakeNginx) {
+          // Return fake Nginx response
+          fakeResGenerator.nginx(res, fakeNginxVersion as string, getUserAgent(req) || ""); // NOTE: Safe casting because of assert
+        }
       }
+
       res.end();
     } else {
+      // If fakeNginx is enable
+      if (enableFakeNginx) {
+        // Return fake Nginx response
+        fakeResGenerator.nginx(res, fakeNginxVersion as string, getUserAgent(req) || ""); // NOTE: Safe casting because of assert
+      }
       // Do nothing
       res.end();
     }
