@@ -2,6 +2,15 @@
   "name": "http-knocking",
   "version": "0.5.0",
   "description": "HTTP knocking like port knocking",
+  "keywords": [
+    "http",
+    "knocking",
+    "server",
+    "reverse-proxy",
+    "proxy",
+    "security",
+    "websocket"
+  ],
   "bin": {
     "http-knocking": "dist/src/main.js"
   },
