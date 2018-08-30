@@ -50,6 +50,16 @@ const parser = yargs
   .option("on-upgrade-limit", {
     describe: 'Limit of on-upgrade (WebSocket)',
     demandOption: false,
+  })
+  .option("enable-fake-nginx", {
+    describe: 'Enable fake Nginx Internal Server Error response',
+    demandOption: false,
+    default: false
+  })
+  .option("fake-nginx-version", {
+    describe: 'Nginx version in fake Nginx Internal Server Error response',
+    demandOption: false,
+    default: "1.15.2"
   });
 
 try {
@@ -76,6 +86,10 @@ try {
   const httpRequestLimit: number | undefined = args['http-request-limit'];
   // Get on-upgrade limit
   const onUpgradeLimit: number | undefined   = args['on-upgrade-limit'];
+  // Get enable fake Nginx or not
+  const enableFakeNginx: boolean = args['enable-fake-nginx'];
+  // Get fake Nginx version
+  const fakeNginxVersion: string = args['fake-nginx-version'];
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
@@ -87,7 +101,9 @@ try {
     autoCloseMillis,
     openKnockingMaxIntervalMillis,
     httpRequestLimit,
-    onUpgradeLimit
+    onUpgradeLimit,
+    enableFakeNginx,
+    fakeNginxVersion
   );
 
   server.listen(port);
