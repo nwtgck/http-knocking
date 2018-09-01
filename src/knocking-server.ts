@@ -14,15 +14,15 @@ type OptionalProperty<T> = {
 };
 
 // Type of fake page
-export type FakePageType = Nginx500FakePage | EmptyResponseFakePage;
+export type PageType = FakeNginx500PageType | EmptyResponsePageType;
 
-interface Nginx500FakePage {
-  kind: "Nginx500FakePage",
+interface FakeNginx500PageType {
+  kind: "FakeNginx500PageType",
   nginxVersion: string
 }
 
-interface EmptyResponseFakePage {
-  kind: "EmptyResponseFakePage"
+interface EmptyResponsePageType {
+  kind: "EmptyResponsePageType"
 }
 
 /**
@@ -91,7 +91,7 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
  * @param {number | undefined} openKnockingMaxIntervalMillis
  * @param {number | undefined} httpRequestLimit
  * @param {number | undefined} onUpgradeLimit
- * @param {FakePageType | undefined} fakePageType
+ * @param {PageType | undefined} pageType
  * @param {boolean} quiet
  */
 export function createKnockingServer(targetHost: string,
@@ -103,7 +103,7 @@ export function createKnockingServer(targetHost: string,
                                      openKnockingMaxIntervalMillis: number | undefined = undefined,
                                      httpRequestLimit: number | undefined = undefined,
                                      onUpgradeLimit: number | undefined = undefined,
-                                     fakePageType: FakePageType | undefined = undefined,
+                                     pageType: PageType | undefined = undefined,
                                      quiet: boolean = false) {
 
   // Create proxy instance
@@ -212,12 +212,12 @@ export function createKnockingServer(targetHost: string,
         setCloseTimerIfDefined(openKnockingMaxIntervalTimer, openKnockingMaxIntervalMillis);
 
         // If fakeNginx is enable
-        if (fakePageType !== undefined && fakePageType.kind === "Nginx500FakePage") {
+        if (pageType !== undefined && pageType.kind === "FakeNginx500PageType") {
           // Return fake Nginx response
-          fakeResGenerator.nginx(res, fakePageType.nginxVersion, req.headers["user-agent"] || "");
+          fakeResGenerator.nginx(res, pageType.nginxVersion, req.headers["user-agent"] || "");
         }
         // If empty response is enable
-        if (fakePageType !== undefined && fakePageType.kind === "EmptyResponseFakePage") {
+        if (pageType !== undefined && pageType.kind === "EmptyResponsePageType") {
           // Close connection
           req.connection.end();
         } else {
@@ -226,12 +226,12 @@ export function createKnockingServer(targetHost: string,
       }
     } else {
       // If fakeNginx is enable
-      if (fakePageType !== undefined && fakePageType.kind === "Nginx500FakePage") {
+      if (pageType !== undefined && pageType.kind === "FakeNginx500PageType") {
         // Return fake Nginx response
-        fakeResGenerator.nginx(res, fakePageType.nginxVersion, req.headers["user-agent"] || "");
+        fakeResGenerator.nginx(res, pageType.nginxVersion, req.headers["user-agent"] || "");
       }
       // If empty response is enable
-      if (fakePageType !== undefined && fakePageType.kind === "EmptyResponseFakePage") {
+      if (pageType !== undefined && pageType.kind === "EmptyResponsePageType") {
         // Close connection
         req.connection.end();
       } else {

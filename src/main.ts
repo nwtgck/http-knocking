@@ -91,11 +91,11 @@ try {
   // Get fake Nginx version
   const fakeNginxVersion: string = args['fake-nginx-version'];
 
-  // Define fakePageType
-  const fakePageType: knockingServer.FakePageType | undefined =
+  // Define pageType
+  const pageType: knockingServer.PageType | undefined =
     (enableFakeNginx) ?
       {
-        kind: "Nginx500FakePage",
+        kind: "FakeNginx500PageType",
         nginxVersion: fakeNginxVersion
       } :
       undefined;
@@ -112,7 +112,7 @@ try {
     openKnockingMaxIntervalMillis,
     httpRequestLimit,
     onUpgradeLimit,
-    fakePageType,
+    pageType,
   );
 
   server.listen(port);

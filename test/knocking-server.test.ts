@@ -651,7 +651,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         {
-          kind: "Nginx500FakePage",
+          kind: "FakeNginx500PageType",
           nginxVersion: fakeNginxVersion
         },
         true
@@ -755,7 +755,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         {
-          kind: "Nginx500FakePage",
+          kind: "FakeNginx500PageType",
           nginxVersion: fakeNginxVersion
         },
         true
@@ -837,7 +837,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         {
-          kind: "EmptyResponseFakePage",
+          kind: "EmptyResponsePageType",
         },
         true
       );
