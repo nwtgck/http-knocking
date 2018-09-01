@@ -30,5 +30,5 @@ export function nginx(res: http.ServerResponse, nginxVersion: string, userAgent:
     "Content-Type": "text/html",
     "Content-Length": body.length
   });
-  res.write(body);
+  res.end(body);
 }
