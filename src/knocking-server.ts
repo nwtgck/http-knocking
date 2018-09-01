@@ -206,7 +206,7 @@ export function createKnockingServer(targetHost: string,
         // Set close-timer if millis are defined
         setCloseTimerIfDefined(autoCloseTimer, autoCloseMillis);
 
-        res.write("Open\n");
+        res.end("Open\n");
       } else {
         // Set knocking-max-interval timer if millis are defined
         setCloseTimerIfDefined(openKnockingMaxIntervalTimer, openKnockingMaxIntervalMillis);
@@ -216,17 +216,28 @@ export function createKnockingServer(targetHost: string,
           // Return fake Nginx response
           fakeResGenerator.nginx(res, fakePageType.nginxVersion, req.headers["user-agent"] || "");
         }
+        // If empty response is enable
+        if (fakePageType !== undefined && fakePageType.kind === "EmptyResponseFakePage") {
+          // Close connection
+          req.connection.end();
+        } else {
+          res.end();
+        }
       }
-
-      res.end();
     } else {
       // If fakeNginx is enable
       if (fakePageType !== undefined && fakePageType.kind === "Nginx500FakePage") {
         // Return fake Nginx response
         fakeResGenerator.nginx(res, fakePageType.nginxVersion, req.headers["user-agent"] || "");
       }
-      // Do nothing
-      res.end();
+      // If empty response is enable
+      if (fakePageType !== undefined && fakePageType.kind === "EmptyResponseFakePage") {
+        // Close connection
+        req.connection.end();
+      } else {
+        // Do nothing
+        res.end();
+      }
     }
   });
 

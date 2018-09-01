@@ -820,6 +820,90 @@ describe("knockingServer", ()=>{
       }
     });
 
+    it("should return empty response", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      const fakeNginxVersion: string = "1.15.1";
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        {
+          kind: "EmptyResponseFakePage",
+        },
+        true
+      );
+
+      await server.listen(knockingPort);
+
+      // Assert server is closed
+      async function assertClosedForEmptyResponse(): Promise<void> {
+        let resBuffer: Buffer;
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/");
+        // Response should be empty
+        assert.equal(resBuffer.toString(), "");
+
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/about");
+        // Response should be empty"
+        assert.equal(resBuffer.toString(), "");
+      }
+
+      try {
+        let resBuffer: Buffer;
+        let res;
+
+        // Assert server is closed
+        await assertClosedForEmptyResponse();
+
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/");
+
+        // === Begin open sequence ===
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/82");
+        // Response should be empty
+        assert.equal(resBuffer.toString(), "");
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/delta");
+        // Response should be Nginx "Internal Server Error"
+        assert.equal(resBuffer.toString(), "");
+        res = await thenRequest("GET", `${knockingUrl}/echo`);
+        // Response should be "Open"
+        assert.equal(res.getBody("UTF-8"), "Open\n");
+        // === End open sequence ===
+
+        // Assert the knocking server is open
+        await assertKnockingServerIsOpen(knockingPort);
+
+        res = await thenRequest("GET", `${knockingUrl}/alpha`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/one`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/one`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/three`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "Closed\n");
+
+        // Assert server is closed
+        await assertClosedForEmptyResponse();
+
+      } finally {
+        await server.close();
+      }
+    });
+
   });
 
 });
