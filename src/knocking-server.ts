@@ -2,7 +2,6 @@ import * as httpProxy from "http-proxy";
 import * as http from "http";
 import * as url from "url";
 import * as net from "net";
-import * as assert from "assert";
 
 import * as fakeResGenerator from "./fake-response-generator";
 
@@ -12,6 +11,18 @@ import * as fakeResGenerator from "./fake-response-generator";
 type OptionalProperty<T> = {
   [K in keyof T]: T[K] | undefined;
 };
+
+// Type of fake page
+export type PageType = FakeNginx500PageType | EmptyResponsePageType;
+
+interface FakeNginx500PageType {
+  kind: "FakeNginx500PageType",
+  nginxVersion: string
+}
+
+interface EmptyResponsePageType {
+  kind: "EmptyResponsePageType"
+}
 
 /**
  * Single timer which ensure that only timer is active
@@ -79,15 +90,20 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
  * @param {number | undefined} openKnockingMaxIntervalMillis
  * @param {number | undefined} httpRequestLimit
  * @param {number | undefined} onUpgradeLimit
- * @param {boolean} enableFakeNginx
- * @param {string| undefined} fakeNginxVersion
+ * @param {PageType | undefined} pageType
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, onUpgradeLimit: number | undefined = undefined, enableFakeNginx: boolean = false, fakeNginxVersion: string | undefined = undefined, quiet: boolean = false) {
-
-  if (enableFakeNginx) {
-    assert(fakeNginxVersion !== undefined, "fakeNginxVersion is required when fake Nginx is enable");
-  }
+export function createKnockingServer(targetHost: string,
+                                     targetPort: number,
+                                     openKnockingSeq: string[],
+                                     closeKnockingSeq: string[],
+                                     enableWebSocket: boolean = false,
+                                     autoCloseMillis: number | undefined = undefined,
+                                     openKnockingMaxIntervalMillis: number | undefined = undefined,
+                                     httpRequestLimit: number | undefined = undefined,
+                                     onUpgradeLimit: number | undefined = undefined,
+                                     pageType: PageType | undefined = undefined,
+                                     quiet: boolean = false) {
 
   // Create proxy instance
   const proxy = httpProxy.createServer(
@@ -189,27 +205,46 @@ export function createKnockingServer(targetHost: string, targetPort: number, ope
         // Set close-timer if millis are defined
         setCloseTimerIfDefined(autoCloseTimer, autoCloseMillis);
 
-        res.write("Open\n");
+        res.end("Open\n");
       } else {
         // Set knocking-max-interval timer if millis are defined
         setCloseTimerIfDefined(openKnockingMaxIntervalTimer, openKnockingMaxIntervalMillis);
 
-        // If fakeNginx is enable
-        if (enableFakeNginx) {
-          // Return fake Nginx response
-          fakeResGenerator.nginx(res, fakeNginxVersion as string, req.headers["user-agent"] || "");
+        if (pageType === undefined) {
+          res.end();
+        } else {
+          switch (pageType.kind) {
+            // If fakeNginx is enable
+            case "FakeNginx500PageType":
+              // Return fake Nginx response
+              fakeResGenerator.nginx(res, pageType.nginxVersion, req.headers["user-agent"] || "");
+              break;
+            // If empty response is enable
+            case "EmptyResponsePageType":
+              // Close connection
+              req.connection.end();
+              break;
+          }
         }
       }
-
-      res.end();
     } else {
-      // If fakeNginx is enable
-      if (enableFakeNginx) {
-        // Return fake Nginx response
-        fakeResGenerator.nginx(res, fakeNginxVersion as string, req.headers["user-agent"] || "");
+      if (pageType === undefined) {
+        // Do nothing
+        res.end();
+      } else {
+        switch (pageType.kind) {
+          // If fakeNginx is enable
+          case "FakeNginx500PageType":
+            // Return fake Nginx response
+            fakeResGenerator.nginx(res, pageType.nginxVersion, req.headers["user-agent"] || "");
+            break;
+          // If empty response is enable
+          case "EmptyResponsePageType":
+            // Close connection
+            req.connection.end();
+            break;
+        }
       }
-      // Do nothing
-      res.end();
     }
   });
 

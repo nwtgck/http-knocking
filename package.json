@@ -1,6 +1,6 @@
 {
   "name": "http-knocking",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "HTTP knocking like port knocking",
   "keywords": [
     "http",
@@ -48,7 +48,7 @@
     "power-assert": "^1.5.0",
     "then-request": "^6.0.0",
     "ts-node": "^7.0.1",
-    "typescript": "^3.0.1",
+    "typescript": "^3.0.3",
     "websocket": "^1.0.26",
     "ws": "^6.0.0"
   }

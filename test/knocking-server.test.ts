@@ -132,7 +132,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -160,7 +159,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -205,7 +203,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -248,7 +245,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -307,7 +303,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -360,7 +355,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -407,7 +401,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -461,7 +454,6 @@ describe("knockingServer", ()=>{
         2000, // 2sec
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -500,7 +492,6 @@ describe("knockingServer", ()=>{
         2000, // 2sec
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -550,7 +541,6 @@ describe("knockingServer", ()=>{
         undefined,
         httpRequestLimit,
         undefined,
-        false,
         undefined,
         true
       );
@@ -599,7 +589,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         onUpgradeRequestLimit,
-        false,
         undefined,
         true
       );
@@ -661,8 +650,10 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        true,
-        fakeNginxVersion,
+        {
+          kind: "FakeNginx500PageType",
+          nginxVersion: fakeNginxVersion
+        },
         true
       );
 
@@ -763,8 +754,10 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        true,
-        fakeNginxVersion,
+        {
+          kind: "FakeNginx500PageType",
+          nginxVersion: fakeNginxVersion
+        },
         true
       );
 
@@ -821,6 +814,90 @@ describe("knockingServer", ()=>{
           // Chrome
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36"
         });
+
+      } finally {
+        await server.close();
+      }
+    });
+
+    it("should return empty response", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      const fakeNginxVersion: string = "1.15.1";
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        {
+          kind: "EmptyResponsePageType",
+        },
+        true
+      );
+
+      await server.listen(knockingPort);
+
+      // Assert server is closed
+      async function assertClosedForEmptyResponse(): Promise<void> {
+        let resBuffer: Buffer;
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/");
+        // Response should be empty
+        assert.equal(resBuffer.toString(), "");
+
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/about");
+        // Response should be empty"
+        assert.equal(resBuffer.toString(), "");
+      }
+
+      try {
+        let resBuffer: Buffer;
+        let res;
+
+        // Assert server is closed
+        await assertClosedForEmptyResponse();
+
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/");
+
+        // === Begin open sequence ===
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/82");
+        // Response should be empty
+        assert.equal(resBuffer.toString(), "");
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/delta");
+        // Response should be Nginx "Internal Server Error"
+        assert.equal(resBuffer.toString(), "");
+        res = await thenRequest("GET", `${knockingUrl}/echo`);
+        // Response should be "Open"
+        assert.equal(res.getBody("UTF-8"), "Open\n");
+        // === End open sequence ===
+
+        // Assert the knocking server is open
+        await assertKnockingServerIsOpen(knockingPort);
+
+        res = await thenRequest("GET", `${knockingUrl}/alpha`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/one`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/one`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "");
+
+        res = await thenRequest("GET", `${knockingUrl}/three`);
+        assert.equal(res.statusCode,200);
+        assert.equal(res.getBody("UTF-8"), "Closed\n");
+
+        // Assert server is closed
+        await assertClosedForEmptyResponse();
 
       } finally {
         await server.close();

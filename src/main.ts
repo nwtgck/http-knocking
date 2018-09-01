@@ -4,6 +4,7 @@
 // (from: https://qiita.com/takayukioda/items/a149bc2907ef77121229)
 
 import * as process   from 'process';
+import * as assert    from "assert";
 import * as yargs     from 'yargs';
 import * as knockingServer from './knocking-server'
 
@@ -60,6 +61,11 @@ const parser = yargs
     describe: 'Nginx version in fake Nginx Internal Server Error response',
     demandOption: false,
     default: "1.15.2"
+  })
+  .option("enable-empty-response", {
+    describe: 'Enable empty response (NOTE: Not empty HTTP body)',
+    demandOption: false,
+    default: false
   });
 
 try {
@@ -90,6 +96,24 @@ try {
   const enableFakeNginx: boolean = args['enable-fake-nginx'];
   // Get fake Nginx version
   const fakeNginxVersion: string = args['fake-nginx-version'];
+  // Get enable-empty-response
+  const enableEmptyResponse: boolean = args['enable-empty-response'];
+
+  assert(!(enableFakeNginx && enableEmptyResponse), "Don't specify both --enable-fake-nginx and --enable-empty-response options");
+
+  // Define pageType
+  const pageType: knockingServer.PageType | undefined =
+    (enableFakeNginx) ?
+      {
+        kind: "FakeNginx500PageType",
+        nginxVersion: fakeNginxVersion
+      } :
+    (enableEmptyResponse)?
+      {
+        kind: "EmptyResponsePageType"
+      } :
+      undefined;
+
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
@@ -102,8 +126,7 @@ try {
     openKnockingMaxIntervalMillis,
     httpRequestLimit,
     onUpgradeLimit,
-    enableFakeNginx,
-    fakeNginxVersion
+    pageType,
   );
 
   server.listen(port);
