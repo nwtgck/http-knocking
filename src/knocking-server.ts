@@ -2,7 +2,6 @@ import * as httpProxy from "http-proxy";
 import * as http from "http";
 import * as url from "url";
 import * as net from "net";
-import * as assert from "assert";
 
 import * as fakeResGenerator from "./fake-response-generator";
 
