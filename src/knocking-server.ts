@@ -83,7 +83,18 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
  * @param {string| undefined} fakeNginxVersion
  * @param {boolean} quiet
  */
-export function createKnockingServer(targetHost: string, targetPort: number, openKnockingSeq: string[], closeKnockingSeq: string[], enableWebSocket: boolean = false, autoCloseMillis: number | undefined = undefined, openKnockingMaxIntervalMillis: number | undefined = undefined, httpRequestLimit: number | undefined = undefined, onUpgradeLimit: number | undefined = undefined, enableFakeNginx: boolean = false, fakeNginxVersion: string | undefined = undefined, quiet: boolean = false) {
+export function createKnockingServer(targetHost: string,
+                                     targetPort: number,
+                                     openKnockingSeq: string[],
+                                     closeKnockingSeq: string[],
+                                     enableWebSocket: boolean = false,
+                                     autoCloseMillis: number | undefined = undefined,
+                                     openKnockingMaxIntervalMillis: number | undefined = undefined,
+                                     httpRequestLimit: number | undefined = undefined,
+                                     onUpgradeLimit: number | undefined = undefined,
+                                     enableFakeNginx: boolean = false,
+                                     fakeNginxVersion: string | undefined = undefined,
+                                     quiet: boolean = false) {
 
   if (enableFakeNginx) {
     assert(fakeNginxVersion !== undefined, "fakeNginxVersion is required when fake Nginx is enable");
