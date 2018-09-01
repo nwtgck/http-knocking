@@ -132,7 +132,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -160,7 +159,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -205,7 +203,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -248,7 +245,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -307,7 +303,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -360,7 +355,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -407,7 +401,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -461,7 +454,6 @@ describe("knockingServer", ()=>{
         2000, // 2sec
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -500,7 +492,6 @@ describe("knockingServer", ()=>{
         2000, // 2sec
         undefined,
         undefined,
-        false,
         undefined,
         true
       );
@@ -550,7 +541,6 @@ describe("knockingServer", ()=>{
         undefined,
         httpRequestLimit,
         undefined,
-        false,
         undefined,
         true
       );
@@ -599,7 +589,6 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         onUpgradeRequestLimit,
-        false,
         undefined,
         true
       );
@@ -661,8 +650,10 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        true,
-        fakeNginxVersion,
+        {
+          kind: "Nginx500FakePage",
+          nginxVersion: fakeNginxVersion
+        },
         true
       );
 
@@ -763,8 +754,10 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
-        true,
-        fakeNginxVersion,
+        {
+          kind: "Nginx500FakePage",
+          nginxVersion: fakeNginxVersion
+        },
         true
       );
 

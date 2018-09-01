@@ -13,6 +13,18 @@ type OptionalProperty<T> = {
   [K in keyof T]: T[K] | undefined;
 };
 
+// Type of fake page
+export type FakePageType = Nginx500FakePage | EmptyResponseFakePage;
+
+interface Nginx500FakePage {
+  kind: "Nginx500FakePage",
+  nginxVersion: string
+}
+
+interface EmptyResponseFakePage {
+  kind: "EmptyResponseFakePage"
+}
+
 /**
  * Single timer which ensure that only timer is active
  */
@@ -79,8 +91,7 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
  * @param {number | undefined} openKnockingMaxIntervalMillis
  * @param {number | undefined} httpRequestLimit
  * @param {number | undefined} onUpgradeLimit
- * @param {boolean} enableFakeNginx
- * @param {string| undefined} fakeNginxVersion
+ * @param {FakePageType | undefined} fakePageType
  * @param {boolean} quiet
  */
 export function createKnockingServer(targetHost: string,
@@ -92,13 +103,8 @@ export function createKnockingServer(targetHost: string,
                                      openKnockingMaxIntervalMillis: number | undefined = undefined,
                                      httpRequestLimit: number | undefined = undefined,
                                      onUpgradeLimit: number | undefined = undefined,
-                                     enableFakeNginx: boolean = false,
-                                     fakeNginxVersion: string | undefined = undefined,
+                                     fakePageType: FakePageType | undefined = undefined,
                                      quiet: boolean = false) {
-
-  if (enableFakeNginx) {
-    assert(fakeNginxVersion !== undefined, "fakeNginxVersion is required when fake Nginx is enable");
-  }
 
   // Create proxy instance
   const proxy = httpProxy.createServer(
@@ -206,18 +212,18 @@ export function createKnockingServer(targetHost: string,
         setCloseTimerIfDefined(openKnockingMaxIntervalTimer, openKnockingMaxIntervalMillis);
 
         // If fakeNginx is enable
-        if (enableFakeNginx) {
+        if (fakePageType !== undefined && fakePageType.kind === "Nginx500FakePage") {
           // Return fake Nginx response
-          fakeResGenerator.nginx(res, fakeNginxVersion as string, req.headers["user-agent"] || "");
+          fakeResGenerator.nginx(res, fakePageType.nginxVersion, req.headers["user-agent"] || "");
         }
       }
 
       res.end();
     } else {
       // If fakeNginx is enable
-      if (enableFakeNginx) {
+      if (fakePageType !== undefined && fakePageType.kind === "Nginx500FakePage") {
         // Return fake Nginx response
-        fakeResGenerator.nginx(res, fakeNginxVersion as string, req.headers["user-agent"] || "");
+        fakeResGenerator.nginx(res, fakePageType.nginxVersion, req.headers["user-agent"] || "");
       }
       // Do nothing
       res.end();
