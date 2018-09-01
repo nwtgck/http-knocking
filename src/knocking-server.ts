@@ -211,32 +211,40 @@ export function createKnockingServer(targetHost: string,
         // Set knocking-max-interval timer if millis are defined
         setCloseTimerIfDefined(openKnockingMaxIntervalTimer, openKnockingMaxIntervalMillis);
 
-        // If fakeNginx is enable
-        if (pageType !== undefined && pageType.kind === "FakeNginx500PageType") {
-          // Return fake Nginx response
-          fakeResGenerator.nginx(res, pageType.nginxVersion, req.headers["user-agent"] || "");
-        }
-        // If empty response is enable
-        if (pageType !== undefined && pageType.kind === "EmptyResponsePageType") {
-          // Close connection
-          req.connection.end();
-        } else {
+        if (pageType === undefined) {
           res.end();
+        } else {
+          switch (pageType.kind) {
+            // If fakeNginx is enable
+            case "FakeNginx500PageType":
+              // Return fake Nginx response
+              fakeResGenerator.nginx(res, pageType.nginxVersion, req.headers["user-agent"] || "");
+              break;
+            // If empty response is enable
+            case "EmptyResponsePageType":
+              // Close connection
+              req.connection.end();
+              break;
+          }
         }
       }
     } else {
-      // If fakeNginx is enable
-      if (pageType !== undefined && pageType.kind === "FakeNginx500PageType") {
-        // Return fake Nginx response
-        fakeResGenerator.nginx(res, pageType.nginxVersion, req.headers["user-agent"] || "");
-      }
-      // If empty response is enable
-      if (pageType !== undefined && pageType.kind === "EmptyResponsePageType") {
-        // Close connection
-        req.connection.end();
-      } else {
+      if (pageType === undefined) {
         // Do nothing
         res.end();
+      } else {
+        switch (pageType.kind) {
+          // If fakeNginx is enable
+          case "FakeNginx500PageType":
+            // Return fake Nginx response
+            fakeResGenerator.nginx(res, pageType.nginxVersion, req.headers["user-agent"] || "");
+            break;
+          // If empty response is enable
+          case "EmptyResponsePageType":
+            // Close connection
+            req.connection.end();
+            break;
+        }
       }
     }
   });
