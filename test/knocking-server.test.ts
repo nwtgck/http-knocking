@@ -918,6 +918,90 @@ describe("knockingServer", ()=>{
       }
     });
 
+
+    it("should update knocking sequence automatically", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      // (NOTE: These sequences will be updated in notificationCallback)
+      let updatedOpenKnockingSeq: string[]  = [];
+      let updatedCloseKnockingSeq: string[] =[];
+      const nKnockings: number = 3;
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        {
+          intervalMillis: 2000,
+          minLength: 7,
+          maxLength: 11,
+          nKnockings: nKnockings,
+          notificationCallback: (async (newOpenSeq: string[], newCloseSeq: string[]) => {
+            // Update sequences
+            updatedOpenKnockingSeq  = newOpenSeq;
+            updatedCloseKnockingSeq = newCloseSeq;
+          })
+        },
+        true
+      );
+
+      await server.listen(knockingPort);
+
+      // Assert server is closed
+      async function assertClosedForEmptyResponse(): Promise<void> {
+        let resBuffer: Buffer;
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/");
+        // Response should be empty
+        assert.equal(resBuffer.toString(), "");
+
+        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/about");
+        // Response should be empty"
+        assert.equal(resBuffer.toString(), "");
+      }
+
+      try {
+
+        // Wait for a just moment
+        await testUtil.sleep(500);
+
+        // Test 3 times
+        for(let i = 0; i < 3; i++) {
+
+          // Assert open-sequence length should be nKnockings
+          assert.equal(updatedOpenKnockingSeq.length, nKnockings);
+          assert.equal(updatedCloseKnockingSeq.length, nKnockings);
+
+          // Open knocking-server by visiting path
+          for (let openPath of updatedOpenKnockingSeq) {
+            // (NOTE: openPath start with "/")
+            await thenRequest("GET", `${knockingUrl}${openPath}`);
+          }
+          // Assert the knocking server is open
+          await assertKnockingServerIsOpen(knockingPort);
+
+          // Close knocking-server by visiting path
+          for (let closePath of updatedCloseKnockingSeq) {
+            // (NOTE: openPath start with "/")
+            await thenRequest("GET", `${knockingUrl}${closePath}`);
+          }
+          // Assert the knocking server is open
+          await assertKnockingServerIsClosed(knockingPort);
+
+          await testUtil.sleep(2500);
+        }
+      } finally {
+        await server.close();
+      }
+    });
+
   });
 
 });

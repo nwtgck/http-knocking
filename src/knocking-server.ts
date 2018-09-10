@@ -137,6 +137,8 @@ export function createKnockingServer(targetHost: string,
   let autoCloseTimer: SingleTimer = new SingleTimer();
   // Timer of openKnockingMaxIntervalMillis
   let openKnockingMaxIntervalTimer: SingleTimer = new SingleTimer();
+  // Timer of auto knocking-update
+  let autoKnockingUpdateTimer: NodeJS.Timer | undefined = undefined;
   // Current HTTP request limit
   let currHttpRequestLimit: number | undefined = undefined;
   // Current on-upgrade limit
@@ -185,8 +187,10 @@ export function createKnockingServer(targetHost: string,
           knockingUpdateSetting.minLength,
           knockingUpdateSetting.maxLength
         );
+        // Define open-path
+        const openPath: string = "/" + fakeWord;
         // Push new open-knocking
-        newOpenKnockingSeq.push(fakeWord);
+        newOpenKnockingSeq.push(openPath);
       }
       // Create close-knocking sequence
       const newCloseKnockingSeq: string[] =
@@ -205,7 +209,7 @@ export function createKnockingServer(targetHost: string,
       );
 
       // Next loop
-      setTimeout(updateKnocking, knockingUpdateSetting.intervalMillis);
+      autoKnockingUpdateTimer = setTimeout(updateKnocking, knockingUpdateSetting.intervalMillis);
     }
   }
   // If knocking-update is enable
@@ -316,6 +320,15 @@ export function createKnockingServer(targetHost: string,
             break;
         }
       }
+    }
+  });
+
+
+  server.on('close', ()=>{
+    // If autoKnockingUpdateTimer is defined
+    if(autoKnockingUpdateTimer !== undefined) {
+      // Clear autoKnockingUpdateTimer
+      clearTimeout(autoKnockingUpdateTimer);
     }
   });
 
