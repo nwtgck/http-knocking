@@ -2,6 +2,7 @@ import * as httpProxy from "http-proxy";
 import * as http from "http";
 import * as url from "url";
 import * as net from "net";
+import * as fakelish from "fakelish";
 
 import * as fakeResGenerator from "./fake-response-generator";
 
@@ -22,6 +23,17 @@ interface FakeNginx500PageType {
 
 interface EmptyResponsePageType {
   kind: "EmptyResponsePageType"
+}
+
+/**
+ * Setting of auto knocking-update
+ */
+interface KnockingUpdateSetting {
+  intervalMillis: number;
+  minLength: number;
+  maxLength: number;
+  nKnockings: number;
+  notificationCallback: (openKnockingSeq: string[], closeKnockingSeq: string[]) => Promise<void>;
 }
 
 /**
@@ -91,6 +103,7 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
  * @param {number | undefined} httpRequestLimit
  * @param {number | undefined} onUpgradeLimit
  * @param {PageType | undefined} pageType
+ * @param {KnockingUpdateSetting | undefined} knockingUpdateSetting
  * @param {boolean} quiet
  */
 export function createKnockingServer(targetHost: string,
@@ -103,6 +116,7 @@ export function createKnockingServer(targetHost: string,
                                      httpRequestLimit: number | undefined = undefined,
                                      onUpgradeLimit: number | undefined = undefined,
                                      pageType: PageType | undefined = undefined,
+                                     knockingUpdateSetting: KnockingUpdateSetting | undefined = undefined,
                                      quiet: boolean = false) {
 
   // Create proxy instance
@@ -146,6 +160,63 @@ export function createKnockingServer(targetHost: string,
   function setCloseTimerIfDefined(timer: SingleTimer, millis: number | undefined): void {
     timer.timeout(closeServer, millis);
   }
+
+  // // TODO: Hard code (Remove this line)
+  // knockingUpdateSetting = {
+  //   intervalMillis: 5000,
+  //   minLength: 7,
+  //   maxLength: 11,
+  //   nKnockings: 3,
+  //   notificationCallback: (async (oSeq: string[], cSeq: string[]) => {
+  //     console.log("updated!", oSeq);
+  //   })
+  // };
+
+  // Update knocking process
+  async function updateKnocking(): Promise<void> {
+    // If knocking-update is enable
+    if (knockingUpdateSetting !== undefined) {
+      // Create new open-knocking sequence
+      // NOTE: newOpenKnockingSeq will be pushed
+      const newOpenKnockingSeq: string[] = [];
+      for(let i = 0; i < knockingUpdateSetting.nKnockings; i++) {
+        // Generate a fake word
+        const fakeWord: string = await fakelish.generateFakeWord(
+          knockingUpdateSetting.minLength,
+          knockingUpdateSetting.maxLength
+        );
+        // Push new open-knocking
+        newOpenKnockingSeq.push(fakeWord);
+      }
+      // Create close-knocking sequence
+      const newCloseKnockingSeq: string[] =
+        newOpenKnockingSeq.slice().reverse();
+
+      // Reset open/close indexes
+      resetIdxs();
+      // Update new sequences
+      openKnockingSeq  = newOpenKnockingSeq;
+      closeKnockingSeq = newCloseKnockingSeq;
+
+      // Call notification-callback
+      knockingUpdateSetting.notificationCallback(
+        openKnockingSeq,
+        closeKnockingSeq
+      );
+
+      // Next loop
+      setTimeout(updateKnocking, knockingUpdateSetting.intervalMillis);
+    }
+  }
+  // If knocking-update is enable
+  if (knockingUpdateSetting !== undefined) {
+    // Start update knocking
+    updateKnocking()
+      .catch(reason => {
+        console.error(reason);
+      });
+  }
+
 
   // HTTP Reverse Proxy Server
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {

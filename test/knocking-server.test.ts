@@ -133,6 +133,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -155,6 +156,7 @@ describe("knockingServer", ()=>{
         openKnockingSeq,
         closeKnockingSeq,
         true,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -204,6 +206,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -241,6 +244,7 @@ describe("knockingServer", ()=>{
         openKnockingSeq,
         closeKnockingSeq,
         true,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -304,6 +308,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -356,6 +361,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -398,6 +404,7 @@ describe("knockingServer", ()=>{
         closeKnockingSeq,
         true,
         5000, // 5sec
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -455,6 +462,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -490,6 +498,7 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         2000, // 2sec
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -542,6 +551,7 @@ describe("knockingServer", ()=>{
         httpRequestLimit,
         undefined,
         undefined,
+        undefined,
         true
       );
 
@@ -589,6 +599,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         onUpgradeRequestLimit,
+        undefined,
         undefined,
         true
       );
@@ -654,6 +665,7 @@ describe("knockingServer", ()=>{
           kind: "FakeNginx500PageType",
           nginxVersion: fakeNginxVersion
         },
+        undefined,
         true
       );
 
@@ -758,6 +770,7 @@ describe("knockingServer", ()=>{
           kind: "FakeNginx500PageType",
           nginxVersion: fakeNginxVersion
         },
+        undefined,
         true
       );
 
@@ -839,6 +852,7 @@ describe("knockingServer", ()=>{
         {
           kind: "EmptyResponsePageType",
         },
+        undefined,
         true
       );
 
