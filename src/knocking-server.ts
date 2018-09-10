@@ -2,7 +2,9 @@ import * as httpProxy from "http-proxy";
 import * as http from "http";
 import * as url from "url";
 import * as net from "net";
+import * as rp from "request-promise";
 import * as fakelish from "fakelish";
+import * as jsonTemplates from "json-templates";
 
 import * as fakeResGenerator from "./fake-response-generator";
 
@@ -25,15 +27,21 @@ interface EmptyResponsePageType {
   kind: "EmptyResponsePageType"
 }
 
+
+/**
+ * Type of notification callback
+ */
+type NotificationCallback = (openKnockingSeq: string[], closeKnockingSeq: string[]) => Promise<void>;
+
 /**
  * Setting of auto knocking-update
  */
-interface KnockingUpdateSetting {
+export interface KnockingUpdateSetting {
   intervalMillis: number;
   minLength: number;
   maxLength: number;
   nKnockings: number;
-  notificationCallback: (openKnockingSeq: string[], closeKnockingSeq: string[]) => Promise<void>;
+  notificationCallback: NotificationCallback;
 }
 
 /**
@@ -89,6 +97,30 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
   } else {
     return f(obj);
   }
+}
+
+/**
+ * Create webhook notification
+ * @param webhookUrl
+ * @param template
+ */
+export function genereateWebhookNotificationCallback(webhookUrl: string, template: jsonTemplates.Template): NotificationCallback {
+  return async (openKnockingSeq: string[], closeKnockingSeq: string[]): Promise<void> => {
+    // Create JSON string by template
+    const jsonStr: string = template({
+      openKnocking: openKnockingSeq.join(","),
+      closeKnocking: closeKnockingSeq.join(",")
+    });
+    await rp({
+      url: webhookUrl,
+      method: "POST",
+      form: jsonStr,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(jsonStr)
+      }
+    });
+  };
 }
 
 /**
@@ -162,17 +194,6 @@ export function createKnockingServer(targetHost: string,
   function setCloseTimerIfDefined(timer: SingleTimer, millis: number | undefined): void {
     timer.timeout(closeServer, millis);
   }
-
-  // // TODO: Hard code (Remove this line)
-  // knockingUpdateSetting = {
-  //   intervalMillis: 5000,
-  //   minLength: 7,
-  //   maxLength: 11,
-  //   nKnockings: 3,
-  //   notificationCallback: (async (oSeq: string[], cSeq: string[]) => {
-  //     console.log("updated!", oSeq);
-  //   })
-  // };
 
   // Update knocking process
   async function updateKnocking(): Promise<void> {

@@ -4,9 +4,19 @@
 // (from: https://qiita.com/takayukioda/items/a149bc2907ef77121229)
 
 import * as process   from 'process';
+import * as fs from "fs";
 import * as assert    from "assert";
 import * as yargs     from 'yargs';
 import * as knockingServer from './knocking-server'
+import * as jsonTemplates from "json-templates";
+
+/**
+ * Unwrap union type of T and undefined
+ * @param value
+ */
+function unwrapUndefined<T>(value: T | undefined): T {
+  return value as T;
+}
 
 // Create option parser
 const parser = yargs
@@ -66,6 +76,39 @@ const parser = yargs
     describe: 'Enable empty response (NOTE: Not empty HTTP body)',
     demandOption: false,
     default: false
+  })
+  .option("enable-knocking-update", {
+    describe: 'Enable auto knocking-update',
+    demandOption: false,
+    default: false
+  })
+  .option("knocking-update-interval-sec", {
+    describe: 'Interval millis of auto knocking-update',
+    demandOption: false,
+    default: 1800
+  })
+  .option("min-knocking-length", {
+    describe: 'Min knocking length used in knocking-update',
+    demandOption: false,
+    default: 6
+  })
+  .option("max-knocking-length", {
+    describe: 'Max knocking length used in knocking-update',
+    demandOption: false,
+    default: 8
+  })
+  .option("n-knockings", {
+    describe: 'The number of knocking sequence',
+    demandOption: false,
+    default: 3
+  })
+  .option("webhook-url", {
+    describe: 'Webhook URL used in knocking-update',
+    demandOption: false,
+  })
+  .option("webhook-template-path", {
+    describe: 'Webhook template file path used in knocking-update',
+    demandOption: false,
   });
 
 try {
@@ -98,6 +141,20 @@ try {
   const fakeNginxVersion: string = args['fake-nginx-version'];
   // Get enable-empty-response
   const enableEmptyResponse: boolean = args['enable-empty-response'];
+  // Get enable-knocking-update
+  const enableKnockingUpdate: boolean = args['enable-knocking-update'];
+  // Get knocking-update-interval-sec
+  const knockingUpdateIntervalSec: number = args['knocking-update-interval-sec'];
+  // Get min-knocking-length
+  const minKnockingLength: number = args['min-knocking-length'];
+  // Get max-knocking-length
+  const maxKnockingLength: number = args['max-knocking-length'];
+  // Get n-knockings
+  const nKnockings: number = args['n-knockings'];
+  // Get webhook-url
+  const webhookUrl: string | undefined = args['webhook-url'];
+  // Get webhook-template-path
+  const webhookTemplatePath: string | undefined = args['webhook-template-path'];
 
   assert(!(enableFakeNginx && enableEmptyResponse), "Don't specify both --enable-fake-nginx and --enable-empty-response options");
 
@@ -114,6 +171,22 @@ try {
       } :
       undefined;
 
+  // Define auto knocking-update setting
+  const knockingUpdateSetting: knockingServer.KnockingUpdateSetting | undefined =
+    enableKnockingUpdate ? {
+      intervalMillis: knockingUpdateIntervalSec * 1000,
+      minLength: minKnockingLength,
+      maxLength: maxKnockingLength,
+      nKnockings: nKnockings,
+      notificationCallback: knockingServer.genereateWebhookNotificationCallback(
+        unwrapUndefined(webhookUrl),
+        jsonTemplates(
+          // Read webhook template
+          fs.readFileSync(unwrapUndefined(webhookTemplatePath)).toString("UTF-8")
+        )
+      )
+    } :
+    undefined;
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
@@ -127,6 +200,7 @@ try {
     httpRequestLimit,
     onUpgradeLimit,
     pageType,
+    knockingUpdateSetting
   );
 
   server.listen(port);
