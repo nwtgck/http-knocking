@@ -955,18 +955,6 @@ describe("knockingServer", ()=>{
 
       await server.listen(knockingPort);
 
-      // Assert server is closed
-      async function assertClosedForEmptyResponse(): Promise<void> {
-        let resBuffer: Buffer;
-        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/");
-        // Response should be empty
-        assert.equal(resBuffer.toString(), "");
-
-        resBuffer = await testUtil.httpGet("localhost", knockingPort, "/about");
-        // Response should be empty"
-        assert.equal(resBuffer.toString(), "");
-      }
-
       try {
 
         // Wait for a just moment
