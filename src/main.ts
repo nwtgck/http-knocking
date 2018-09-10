@@ -9,6 +9,7 @@ import * as assert    from "assert";
 import * as yargs     from 'yargs';
 import * as knockingServer from './knocking-server'
 import * as jsonTemplates from "json-templates";
+import {AssertionError} from "assert";
 
 /**
  * Unwrap union type of T and undefined
@@ -35,7 +36,7 @@ const parser = yargs
   })
   .option("open-knocking", {
     describe: 'Open-knocking sequence (e.g. "/alpha,/foxtrot,/lima")',
-    demandOption: true
+    demandOption: false
   })
   .option("close-knocking", {
     describe: 'Close-knocking sequence (e.g. "/victor,/kilo")',
@@ -121,10 +122,10 @@ try {
   const targetHost: string = args['target-host'];
   // Get target port
   const targetPort: number = args['target-port'];
-  // Get open knocking sequence
-  const openKnockingSeq: string[]  = args['open-knocking'].split(",");
-  // Get close knocking sequence
-  const closeKnockingSeq: string[] = args['close-knocking'] === undefined ? openKnockingSeq.slice().reverse() : args['close-knocking'].split(",");
+  // Get open knocking sequence string
+  const openKnockingStr: string | undefined  = args['open-knocking'];
+  // Get close knocking sequence string
+  const closeKnockingStr: string | undefined = args['close-knocking'];
   // Get enable-websocket
   const enableWebSocket: boolean = args['enable-websocket'];
   // Get auto-close millis
@@ -157,6 +158,31 @@ try {
   const webhookTemplatePath: string | undefined = args['webhook-template-path'];
 
   assert(!(enableFakeNginx && enableEmptyResponse), "Don't specify both --enable-fake-nginx and --enable-empty-response options");
+  
+  let openKnockingSeq: string[];
+  let closeKnockingSeq: string[];
+  if(enableKnockingUpdate) {
+    assert(minKnockingLength <= maxKnockingLength, "min-knocking-length should <= min-knocking-length");
+    assert(maxKnockingLength <= 30, "max-knocking-length should <= 30");
+    assert(nKnockings > 0, "n-knockings should > 0");
+    assert(webhookUrl !== undefined, "webhook-url should be defined");
+    assert(webhookTemplatePath !== undefined, "webhook-template-path should be defined");
+    assert(fs.existsSync(unwrapUndefined(webhookTemplatePath)), "webhook-template-path should exist");
+
+    // Set dummy openKnockingSeq and closeKnockingSeq
+    // NOTE: openKnockingSeq and closeKnockingSeq should be set immediately automatically
+    openKnockingSeq = ["dummy-open-path"];
+    closeKnockingSeq = ["dummy-close-path"];
+  } else {
+    assert(openKnockingStr !== undefined, "open-knocking should be defined");
+
+    // Set open-knocking sequence
+    openKnockingSeq = unwrapUndefined(openKnockingStr).split(",");
+    // Set close-knocking sequence
+    closeKnockingSeq = closeKnockingStr === undefined ?
+        openKnockingSeq.slice().reverse() :
+        closeKnockingStr.split(",");
+  }
 
   // Define pageType
   const pageType: knockingServer.PageType | undefined =
@@ -212,7 +238,11 @@ try {
   })
 
 } catch (err) {
-  console.error(err);
+  if(err instanceof AssertionError) {
+    console.error("Error:", err.message);
+  } else {
+    console.error(err);
+  }
 }
 
 
