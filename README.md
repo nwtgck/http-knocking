@@ -61,7 +61,7 @@ Options:
   --target-host                        Target host to hide            [required]
   --target-port                        Target port to hide         [default: 80]
   --open-knocking                      Open-knocking sequence (e.g.
-                                       "/alpha,/foxtrot,/lima")       [required]
+                                       "/alpha,/foxtrot,/lima")
   --close-knocking                     Close-knocking sequence (e.g.
                                        "/victor,/kilo")
   --enable-websocket                   Enable WebSocket proxy   [default: false]
@@ -75,6 +75,19 @@ Options:
                                        Server Error response [default: "1.15.2"]
   --enable-empty-response              Enable empty response (NOTE: Not empty
                                        HTTP body)               [default: false]
+  --enable-knocking-update             Enable auto knocking-update
+                                                                [default: false]
+  --knocking-update-interval-sec       Interval millis of auto knocking-update
+                                                                 [default: 1800]
+  --min-knocking-length                Min knocking length used in
+                                       knocking-update              [default: 6]
+  --max-knocking-length                Max knocking length used in
+                                       knocking-update              [default: 8]
+  --n-knockings                        The number of knocking sequence
+                                                                    [default: 3]
+  --webhook-url                        Webhook URL used in knocking-update
+  --webhook-template-path              Webhook template file path used in
+                                       knocking-update
 ```
 
  `--auto-close-millis` option makes your server more secure because it closes automatically by time.  
@@ -84,3 +97,43 @@ Options:
  `--enable-fake-nginx` option fakes server response like "Nginx Internal Server Error" when the knocking server is closed.    
  `--fake-nginx-version` option specifies Nginx version used in fake "Internal Server Error" response.      
  `--enable-empty-response` option changes a knocking server response to be empty when the knocking server is closed
+
+ ## Auto Knocking-Update
+
+ To get more secure, `--enable-knocking-update` option updates knocking-sequences regularly and notifies new sequences via Webhook. 
+
+Here is a demo to notify to Slack.
+
+ ![Auto Knocking-Update to Slack](demo_images/auto-knocking-update-slack.gif)
+
+
+The following file is a template used in Webhook request.
+ ```json
+{
+  "channel": "#http-knocking",
+  "username": "HTTP Knocking",
+  "icon_emoji": ":door:",
+  "attachments": [
+    {
+      "color": "#5cb58a",
+      "fields": [{
+        "title": "Open",
+        "value": "{{openKnocking}}"
+      }]
+    },
+    {
+      "color": "#cc0000",
+      "fields": [{
+        "title": "Close",
+        "value": "{{closeKnocking}}"
+      }]
+    }
+  ]
+}
+ ```
+([webhook-templates/rich_slack_template.json](webhook-templates/rich_slack_template.json))
+
+The following options are required to enable auto knocking-update.
+* `--enable-knocking-update`
+* `--webhook-url=https://...`
+* `--webhook-template-path=./path/to/webhook/template`
