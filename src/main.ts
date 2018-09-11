@@ -4,9 +4,20 @@
 // (from: https://qiita.com/takayukioda/items/a149bc2907ef77121229)
 
 import * as process   from 'process';
+import * as fs from "fs";
 import * as assert    from "assert";
 import * as yargs     from 'yargs';
 import * as knockingServer from './knocking-server'
+import * as jsonTemplates from "json-templates";
+import {AssertionError} from "assert";
+
+/**
+ * Unwrap union type of T and undefined
+ * @param value
+ */
+function unwrapUndefined<T>(value: T | undefined): T {
+  return value as T;
+}
 
 // Create option parser
 const parser = yargs
@@ -25,7 +36,7 @@ const parser = yargs
   })
   .option("open-knocking", {
     describe: 'Open-knocking sequence (e.g. "/alpha,/foxtrot,/lima")',
-    demandOption: true
+    demandOption: false
   })
   .option("close-knocking", {
     describe: 'Close-knocking sequence (e.g. "/victor,/kilo")',
@@ -66,6 +77,39 @@ const parser = yargs
     describe: 'Enable empty response (NOTE: Not empty HTTP body)',
     demandOption: false,
     default: false
+  })
+  .option("enable-knocking-update", {
+    describe: 'Enable auto knocking-update',
+    demandOption: false,
+    default: false
+  })
+  .option("knocking-update-interval-sec", {
+    describe: 'Interval millis of auto knocking-update',
+    demandOption: false,
+    default: 1800
+  })
+  .option("min-knocking-length", {
+    describe: 'Min knocking length used in auto knocking-update',
+    demandOption: false,
+    default: 6
+  })
+  .option("max-knocking-length", {
+    describe: 'Max knocking length used in auto knocking-update',
+    demandOption: false,
+    default: 8
+  })
+  .option("n-knockings", {
+    describe: 'The number of knocking sequence used in auto knocking-update',
+    demandOption: false,
+    default: 3
+  })
+  .option("webhook-url", {
+    describe: 'Webhook URL used in auto knocking-update',
+    demandOption: false,
+  })
+  .option("webhook-template-path", {
+    describe: 'Webhook template file path used in auto knocking-update',
+    demandOption: false,
   });
 
 try {
@@ -78,10 +122,10 @@ try {
   const targetHost: string = args['target-host'];
   // Get target port
   const targetPort: number = args['target-port'];
-  // Get open knocking sequence
-  const openKnockingSeq: string[]  = args['open-knocking'].split(",");
-  // Get close knocking sequence
-  const closeKnockingSeq: string[] = args['close-knocking'] === undefined ? openKnockingSeq.slice().reverse() : args['close-knocking'].split(",");
+  // Get open knocking sequence string
+  const openKnockingStr: string | undefined  = args['open-knocking'];
+  // Get close knocking sequence string
+  const closeKnockingStr: string | undefined = args['close-knocking'];
   // Get enable-websocket
   const enableWebSocket: boolean = args['enable-websocket'];
   // Get auto-close millis
@@ -98,8 +142,47 @@ try {
   const fakeNginxVersion: string = args['fake-nginx-version'];
   // Get enable-empty-response
   const enableEmptyResponse: boolean = args['enable-empty-response'];
+  // Get enable-knocking-update
+  const enableKnockingUpdate: boolean = args['enable-knocking-update'];
+  // Get knocking-update-interval-sec
+  const knockingUpdateIntervalSec: number = args['knocking-update-interval-sec'];
+  // Get min-knocking-length
+  const minKnockingLength: number = args['min-knocking-length'];
+  // Get max-knocking-length
+  const maxKnockingLength: number = args['max-knocking-length'];
+  // Get n-knockings
+  const nKnockings: number = args['n-knockings'];
+  // Get webhook-url
+  const webhookUrl: string | undefined = args['webhook-url'];
+  // Get webhook-template-path
+  const webhookTemplatePath: string | undefined = args['webhook-template-path'];
 
   assert(!(enableFakeNginx && enableEmptyResponse), "Don't specify both --enable-fake-nginx and --enable-empty-response options");
+  
+  let openKnockingSeq: string[];
+  let closeKnockingSeq: string[];
+  if(enableKnockingUpdate) {
+    assert(minKnockingLength <= maxKnockingLength, "min-knocking-length should <= min-knocking-length");
+    assert(maxKnockingLength <= 30, "max-knocking-length should <= 30");
+    assert(nKnockings > 0, "n-knockings should > 0");
+    assert(webhookUrl !== undefined, "webhook-url should be defined");
+    assert(webhookTemplatePath !== undefined, "webhook-template-path should be defined");
+    assert(fs.existsSync(unwrapUndefined(webhookTemplatePath)), "webhook-template-path should exist");
+
+    // Set dummy openKnockingSeq and closeKnockingSeq
+    // NOTE: openKnockingSeq and closeKnockingSeq should be set immediately automatically
+    openKnockingSeq = ["dummy-open-path"];
+    closeKnockingSeq = ["dummy-close-path"];
+  } else {
+    assert(openKnockingStr !== undefined, "open-knocking should be defined");
+
+    // Set open-knocking sequence
+    openKnockingSeq = unwrapUndefined(openKnockingStr).split(",");
+    // Set close-knocking sequence
+    closeKnockingSeq = closeKnockingStr === undefined ?
+        openKnockingSeq.slice().reverse() :
+        closeKnockingStr.split(",");
+  }
 
   // Define pageType
   const pageType: knockingServer.PageType | undefined =
@@ -114,6 +197,22 @@ try {
       } :
       undefined;
 
+  // Define auto knocking-update setting
+  const knockingUpdateSetting: knockingServer.KnockingUpdateSetting | undefined =
+    enableKnockingUpdate ? {
+      intervalMillis: knockingUpdateIntervalSec * 1000,
+      minLength: minKnockingLength,
+      maxLength: maxKnockingLength,
+      nKnockings: nKnockings,
+      notificationCallback: knockingServer.genereateWebhookNotificationCallback(
+        unwrapUndefined(webhookUrl),
+        jsonTemplates(
+          // Read webhook template
+          fs.readFileSync(unwrapUndefined(webhookTemplatePath)).toString("UTF-8")
+        )
+      )
+    } :
+    undefined;
 
   // Create a knocking server
   const server = knockingServer.createKnockingServer(
@@ -127,6 +226,7 @@ try {
     httpRequestLimit,
     onUpgradeLimit,
     pageType,
+    knockingUpdateSetting
   );
 
   server.listen(port);
@@ -138,7 +238,11 @@ try {
   })
 
 } catch (err) {
-  console.error(err);
+  if(err instanceof AssertionError) {
+    console.error("Error:", err.message);
+  } else {
+    console.error(err);
+  }
 }
 
 
