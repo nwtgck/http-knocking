@@ -89,26 +89,26 @@ const parser = yargs
     default: 1800
   })
   .option("min-knocking-length", {
-    describe: 'Min knocking length used in knocking-update',
+    describe: 'Min knocking length used in auto knocking-update',
     demandOption: false,
     default: 6
   })
   .option("max-knocking-length", {
-    describe: 'Max knocking length used in knocking-update',
+    describe: 'Max knocking length used in auto knocking-update',
     demandOption: false,
     default: 8
   })
   .option("n-knockings", {
-    describe: 'The number of knocking sequence',
+    describe: 'The number of knocking sequence used in auto knocking-update',
     demandOption: false,
     default: 3
   })
   .option("webhook-url", {
-    describe: 'Webhook URL used in knocking-update',
+    describe: 'Webhook URL used in auto knocking-update',
     demandOption: false,
   })
   .option("webhook-template-path", {
-    describe: 'Webhook template file path used in knocking-update',
+    describe: 'Webhook template file path used in auto knocking-update',
     demandOption: false,
   });
 

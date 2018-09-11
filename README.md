@@ -79,14 +79,14 @@ Options:
                                                                 [default: false]
   --knocking-update-interval-sec       Interval millis of auto knocking-update
                                                                  [default: 1800]
-  --min-knocking-length                Min knocking length used in
+  --min-knocking-length                Min knocking length used in auto
                                        knocking-update              [default: 6]
-  --max-knocking-length                Max knocking length used in
+  --max-knocking-length                Max knocking length used in auto
                                        knocking-update              [default: 8]
-  --n-knockings                        The number of knocking sequence
-                                                                    [default: 3]
-  --webhook-url                        Webhook URL used in knocking-update
-  --webhook-template-path              Webhook template file path used in
+  --n-knockings                        The number of knocking sequence used in
+                                       auto knocking-update         [default: 3]
+  --webhook-url                        Webhook URL used in auto knocking-update
+  --webhook-template-path              Webhook template file path used in auto
                                        knocking-update
 ```
 
