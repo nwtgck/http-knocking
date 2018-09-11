@@ -5,6 +5,7 @@ import * as express from 'express';
 import * as websocket from 'websocket';
 import * as WebSocket from 'ws';
 import * as testUtil from './test-util';
+import * as jsonTemplates from "json-templates";
 
 import * as knockingServer from '../src/knocking-server';
 
@@ -133,6 +134,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -155,6 +157,7 @@ describe("knockingServer", ()=>{
         openKnockingSeq,
         closeKnockingSeq,
         true,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -204,6 +207,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -241,6 +245,7 @@ describe("knockingServer", ()=>{
         openKnockingSeq,
         closeKnockingSeq,
         true,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -304,6 +309,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -356,6 +362,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -398,6 +405,7 @@ describe("knockingServer", ()=>{
         closeKnockingSeq,
         true,
         5000, // 5sec
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -455,6 +463,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         undefined,
+        undefined,
         true
       );
       await server.listen(knockingPort);
@@ -490,6 +499,7 @@ describe("knockingServer", ()=>{
         true,
         undefined,
         2000, // 2sec
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -542,6 +552,7 @@ describe("knockingServer", ()=>{
         httpRequestLimit,
         undefined,
         undefined,
+        undefined,
         true
       );
 
@@ -589,6 +600,7 @@ describe("knockingServer", ()=>{
         undefined,
         undefined,
         onUpgradeRequestLimit,
+        undefined,
         undefined,
         true
       );
@@ -654,6 +666,7 @@ describe("knockingServer", ()=>{
           kind: "FakeNginx500PageType",
           nginxVersion: fakeNginxVersion
         },
+        undefined,
         true
       );
 
@@ -758,6 +771,7 @@ describe("knockingServer", ()=>{
           kind: "FakeNginx500PageType",
           nginxVersion: fakeNginxVersion
         },
+        undefined,
         true
       );
 
@@ -839,6 +853,7 @@ describe("knockingServer", ()=>{
         {
           kind: "EmptyResponsePageType",
         },
+        undefined,
         true
       );
 
@@ -901,6 +916,151 @@ describe("knockingServer", ()=>{
 
       } finally {
         await server.close();
+      }
+    });
+
+
+    it("should update knocking sequence automatically", async ()=>{
+      const knockingPort: number = 6677;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      // (NOTE: These sequences will be updated in notificationCallback)
+      let updatedOpenKnockingSeq: string[]  = [];
+      let updatedCloseKnockingSeq: string[] =[];
+      const nKnockings: number = 3;
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        {
+          intervalMillis: 2000,
+          minLength: 7,
+          maxLength: 11,
+          nKnockings: nKnockings,
+          notificationCallback: (async (newOpenSeq: string[], newCloseSeq: string[]) => {
+            // Update sequences
+            updatedOpenKnockingSeq  = newOpenSeq;
+            updatedCloseKnockingSeq = newCloseSeq;
+          })
+        },
+        true
+      );
+
+      await server.listen(knockingPort);
+
+      try {
+
+        // Wait for a just moment
+        await testUtil.sleep(500);
+
+        // Test 3 times
+        for(let i = 0; i < 3; i++) {
+
+          // Assert open-sequence length should be nKnockings
+          assert.equal(updatedOpenKnockingSeq.length, nKnockings);
+          assert.equal(updatedCloseKnockingSeq.length, nKnockings);
+
+          // Open knocking-server by visiting path
+          for (let openPath of updatedOpenKnockingSeq) {
+            // (NOTE: openPath start with "/")
+            await thenRequest("GET", `${knockingUrl}${openPath}`);
+          }
+          // Assert the knocking server is open
+          await assertKnockingServerIsOpen(knockingPort);
+
+          // Close knocking-server by visiting path
+          for (let closePath of updatedCloseKnockingSeq) {
+            // (NOTE: openPath start with "/")
+            await thenRequest("GET", `${knockingUrl}${closePath}`);
+          }
+          // Assert the knocking server is open
+          await assertKnockingServerIsClosed(knockingPort);
+
+          await testUtil.sleep(2500);
+        }
+      } finally {
+        await server.close();
+      }
+    });
+
+    it("should notify a Webhook server by auto knocking-update", async ()=>{
+      const knockingPort: number = 6677;
+      const webhookPort: number = 8899;
+      const knockingUrl: string = `http://localhost:${knockingPort}`;
+      const webhookUrl: string = `http://localhost:${webhookPort}`;
+      const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
+      const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
+      // (NOTE: These sequences will be updated in notificationCallback)
+      let updatedOpenKnockingSeq: string[]  = [];
+      let updatedCloseKnockingSeq: string[] =[];
+      const nKnockings: number = 3;
+      const template = jsonTemplates(
+        "{\"myOpen\": \"{{openKnocking}}\", \"myClose\": \"{{closeKnocking}}\"}"
+      );
+      const server = knockingServer.createKnockingServer(
+        "localhost",
+        targetServerPort,
+        openKnockingSeq,
+        closeKnockingSeq,
+        true,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        {
+          intervalMillis: 2000,
+          minLength: 7,
+          maxLength: 11,
+          nKnockings: nKnockings,
+          notificationCallback: (async (newOpenSeq: string[], newCloseSeq: string[]) => {
+            // Update sequences
+            updatedOpenKnockingSeq  = newOpenSeq;
+            updatedCloseKnockingSeq = newCloseSeq;
+            // Use WebHook
+            knockingServer.genereateWebhookNotificationCallback(
+              webhookUrl,
+              template
+            )(newOpenSeq, newCloseSeq)
+          })
+        },
+        true
+      );
+
+      await server.listen(knockingPort);
+
+      // Create WebHook server
+      const webhookServer = new testUtil.PromiseHttpServer();
+      webhookServer.server.listen(webhookPort);
+
+      try {
+
+        // Wait for a just moment
+        await testUtil.sleep(500);
+
+        // Test 3 times
+        for(let i = 0; i < 3; i++) {
+          const {req: webHookReq, res: webhookRes} = await webhookServer.reqRes();
+          webhookRes.end();
+          const webhookBody = await testUtil.reqToBodyBuffer(webHookReq);
+          const webhookBodyStr = webhookBody.toString("UTF-8");
+
+          // Request to WebHook should be string created by template
+          assert.equal(webhookBodyStr, template({openKnocking: updatedOpenKnockingSeq.join(","), closeKnocking: updatedCloseKnockingSeq.join(",")}));
+
+          // NOTE: Don't use testUtil.sleep() because `await webhookServer.reqRes` waits
+        }
+      } finally {
+        await server.close();
+        await webhookServer.server.close();
       }
     });
 

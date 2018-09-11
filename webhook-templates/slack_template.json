@@ -1,0 +1,6 @@
+{
+  "channel": "#http-knocking",
+  "username": "HTTP Knocking",
+  "icon_emoji": ":door:",
+  "text": "Open: {{openKnocking}}\nClose: {{closeKnocking}}"
+}

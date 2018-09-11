@@ -2,6 +2,9 @@ import * as httpProxy from "http-proxy";
 import * as http from "http";
 import * as url from "url";
 import * as net from "net";
+import * as rp from "request-promise";
+import * as fakelish from "fakelish";
+import * as jsonTemplates from "json-templates";
 
 import * as fakeResGenerator from "./fake-response-generator";
 
@@ -22,6 +25,23 @@ interface FakeNginx500PageType {
 
 interface EmptyResponsePageType {
   kind: "EmptyResponsePageType"
+}
+
+
+/**
+ * Type of notification callback
+ */
+type NotificationCallback = (openKnockingSeq: string[], closeKnockingSeq: string[]) => Promise<void>;
+
+/**
+ * Setting of auto knocking-update
+ */
+export interface KnockingUpdateSetting {
+  intervalMillis: number;
+  minLength: number;
+  maxLength: number;
+  nKnockings: number;
+  notificationCallback: NotificationCallback;
 }
 
 /**
@@ -80,6 +100,30 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
 }
 
 /**
+ * Create webhook notification
+ * @param webhookUrl
+ * @param template
+ */
+export function genereateWebhookNotificationCallback(webhookUrl: string, template: jsonTemplates.Template): NotificationCallback {
+  return async (openKnockingSeq: string[], closeKnockingSeq: string[]): Promise<void> => {
+    // Create JSON string by template
+    const jsonStr: string = template({
+      openKnocking: openKnockingSeq.join(","),
+      closeKnocking: closeKnockingSeq.join(",")
+    });
+    await rp({
+      url: webhookUrl,
+      method: "POST",
+      form: jsonStr,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(jsonStr)
+      }
+    });
+  };
+}
+
+/**
  * Run the knocking
  * @param {string} targetHost
  * @param {number} targetPort
@@ -91,6 +135,7 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
  * @param {number | undefined} httpRequestLimit
  * @param {number | undefined} onUpgradeLimit
  * @param {PageType | undefined} pageType
+ * @param {KnockingUpdateSetting | undefined} knockingUpdateSetting
  * @param {boolean} quiet
  */
 export function createKnockingServer(targetHost: string,
@@ -103,6 +148,7 @@ export function createKnockingServer(targetHost: string,
                                      httpRequestLimit: number | undefined = undefined,
                                      onUpgradeLimit: number | undefined = undefined,
                                      pageType: PageType | undefined = undefined,
+                                     knockingUpdateSetting: KnockingUpdateSetting | undefined = undefined,
                                      quiet: boolean = false) {
 
   // Create proxy instance
@@ -123,6 +169,8 @@ export function createKnockingServer(targetHost: string,
   let autoCloseTimer: SingleTimer = new SingleTimer();
   // Timer of openKnockingMaxIntervalMillis
   let openKnockingMaxIntervalTimer: SingleTimer = new SingleTimer();
+  // Timer of auto knocking-update
+  let autoKnockingUpdateTimer: NodeJS.Timer | undefined = undefined;
   // Current HTTP request limit
   let currHttpRequestLimit: number | undefined = undefined;
   // Current on-upgrade limit
@@ -146,6 +194,54 @@ export function createKnockingServer(targetHost: string,
   function setCloseTimerIfDefined(timer: SingleTimer, millis: number | undefined): void {
     timer.timeout(closeServer, millis);
   }
+
+  // Update knocking process
+  async function updateKnocking(): Promise<void> {
+    // If knocking-update is enable
+    if (knockingUpdateSetting !== undefined) {
+      // Create new open-knocking sequence
+      // NOTE: newOpenKnockingSeq will be pushed
+      const newOpenKnockingSeq: string[] = [];
+      for(let i = 0; i < knockingUpdateSetting.nKnockings; i++) {
+        // Generate a fake word
+        const fakeWord: string = await fakelish.generateFakeWord(
+          knockingUpdateSetting.minLength,
+          knockingUpdateSetting.maxLength
+        );
+        // Define open-path
+        const openPath: string = "/" + fakeWord;
+        // Push new open-knocking
+        newOpenKnockingSeq.push(openPath);
+      }
+      // Create close-knocking sequence
+      const newCloseKnockingSeq: string[] =
+        newOpenKnockingSeq.slice().reverse();
+
+      // Reset open/close indexes
+      resetIdxs();
+      // Update new sequences
+      openKnockingSeq  = newOpenKnockingSeq;
+      closeKnockingSeq = newCloseKnockingSeq;
+
+      // Call notification-callback
+      knockingUpdateSetting.notificationCallback(
+        openKnockingSeq,
+        closeKnockingSeq
+      );
+
+      // Next loop
+      autoKnockingUpdateTimer = setTimeout(updateKnocking, knockingUpdateSetting.intervalMillis);
+    }
+  }
+  // If knocking-update is enable
+  if (knockingUpdateSetting !== undefined) {
+    // Start update knocking
+    updateKnocking()
+      .catch(reason => {
+        console.error(reason);
+      });
+  }
+
 
   // HTTP Reverse Proxy Server
   const server = http.createServer((req: http.IncomingMessage, res: http.ServerResponse) => {
@@ -245,6 +341,15 @@ export function createKnockingServer(targetHost: string,
             break;
         }
       }
+    }
+  });
+
+
+  server.on('close', ()=>{
+    // If autoKnockingUpdateTimer is defined
+    if(autoKnockingUpdateTimer !== undefined) {
+      // Clear autoKnockingUpdateTimer
+      clearTimeout(autoKnockingUpdateTimer);
     }
   });
 
