@@ -130,6 +130,27 @@ export function httpGet(host: string, port: number, getPath: string, headers: {[
   });
 }
 
+
+/**
+ * Request to body buffer
+ * @param req
+ */
+export async function reqToBodyBuffer(req: http.IncomingMessage): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    // (from: https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/)
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk) => {
+      chunks.push(chunk);
+    }).on('end', () => {
+      // Concat buffers
+      const buff = Buffer.concat(chunks);
+      resolve(buff);
+    }).on('error', (err)=>{
+      reject(err);
+    });
+  });
+}
+
 /**
  * Unwrap union type of T and undefined
  * @param value
