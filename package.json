@@ -53,6 +53,7 @@
     "power-assert": "^1.5.0",
     "promise-http-server": "^0.1.0",
     "then-request": "^6.0.0",
+    "timekeeper": "^2.1.2",
     "ts-node": "^7.0.1",
     "typescript": "^3.0.3",
     "websocket": "^1.0.26",

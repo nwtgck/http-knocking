@@ -2,5 +2,20 @@
   "channel": "#http-knocking",
   "username": "HTTP Knocking",
   "icon_emoji": ":door:",
-  "text": "Open: {{openKnocking}}\nClose: {{closeKnocking}}"
+  "attachments": [
+    {
+      "color": "#5cb58a",
+      "fields": [{
+        "title": "Open",
+        "value": "{{openKnocking}}"
+      }]
+    },
+    {
+      "color": "#cc0000",
+      "fields": [{
+        "title": "Close",
+        "value": "{{closeKnocking}}"
+      }]
+    }
+  ]
 }
