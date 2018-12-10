@@ -5,6 +5,7 @@ import * as net from "net";
 import * as rp from "request-promise";
 import * as fakelish from "fakelish";
 import * as jsonTemplates from "json-templates";
+import * as handlebars from "handlebars";
 
 import * as fakeResGenerator from "./fake-response-generator";
 
@@ -105,6 +106,30 @@ function optMap<T, S>(f: (p: T) => S, obj: T | null | undefined): OptionalProper
  * @param template
  */
 export function genereateWebhookNotificationCallback(webhookUrl: string, template: jsonTemplates.Template): NotificationCallback {
+  return async (openKnockingSeq: string[], closeKnockingSeq: string[]): Promise<void> => {
+    // Create JSON string by template
+    const jsonStr: string = template({
+      openKnocking: openKnockingSeq.join(","),
+      closeKnocking: closeKnockingSeq.join(",")
+    });
+    await rp({
+      url: webhookUrl,
+      method: "POST",
+      form: jsonStr,
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(jsonStr)
+      }
+    });
+  };
+}
+
+/**
+ * Create webhook notification
+ * @param webhookUrl
+ * @param template
+ */
+export function genereateWebhookNotificationCallback2(webhookUrl: string, template: handlebars.Template): NotificationCallback {
   return async (openKnockingSeq: string[], closeKnockingSeq: string[]): Promise<void> => {
     // Create JSON string by template
     const jsonStr: string = template({
