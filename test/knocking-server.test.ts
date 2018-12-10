@@ -6,6 +6,8 @@ import * as websocket from 'websocket';
 import * as WebSocket from 'ws';
 import * as testUtil from './test-util';
 import * as jsonTemplates from "json-templates";
+import * as timekeeper from "timekeeper";
+import {PromiseHttpServer} from "promise-http-server";
 
 import * as knockingServer from '../src/knocking-server';
 
@@ -705,6 +707,9 @@ describe("knockingServer", ()=>{
         assert.equal(resBuffer.toString(), getInternalServerErrorRes());
       }
 
+      const freezedDate = new Date();
+      // Freeze time
+      timekeeper.freeze(freezedDate);
       try {
         let resBuffer: Buffer;
         let res;
@@ -747,6 +752,8 @@ describe("knockingServer", ()=>{
         await assertClosedForFakeNginx();
 
       } finally {
+        // Unfreeze date
+        timekeeper.reset();
         await server.close();
       }
     });
@@ -1038,7 +1045,7 @@ describe("knockingServer", ()=>{
       await server.listen(knockingPort);
 
       // Create WebHook server
-      const webhookServer = new testUtil.PromiseHttpServer();
+      const webhookServer = new PromiseHttpServer();
       webhookServer.server.listen(webhookPort);
 
       try {
@@ -1048,7 +1055,7 @@ describe("knockingServer", ()=>{
 
         // Test 3 times
         for(let i = 0; i < 3; i++) {
-          const {req: webHookReq, res: webhookRes} = await webhookServer.reqRes();
+          const {req: webHookReq, res: webhookRes} = await webhookServer.accept();
           webhookRes.end();
           const webhookBody = await testUtil.reqToBodyBuffer(webHookReq);
           const webhookBodyStr = webhookBody.toString("UTF-8");

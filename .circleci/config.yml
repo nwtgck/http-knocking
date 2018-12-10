@@ -1,0 +1,60 @@
+version: 2
+
+ANCHORS:
+ node_steps: &node_steps
+   steps:
+     - checkout
+     - run: npm install
+     - run: npm test
+     # Check whether "run build" is successful
+     - run: npm run build
+
+jobs:
+  node_10:
+    docker:
+      - image: node:10-alpine 
+    <<: *node_steps
+  
+  node_8:
+    docker:
+      - image: node:8-alpine 
+    <<: *node_steps
+  
+  node_6:
+    docker:
+      - image: node:6-alpine 
+    <<: *node_steps
+  
+  docker_test:
+    machine: true
+    steps:
+      - checkout
+      # Check whether "docker build" is succcessful or not
+      - run: docker build -t http-knocking .
+      - run:
+          name: Working test with Docker image
+          command: |
+            # Run ngix server
+            docker run --name web1 --rm -d nginx:1.15-alpine
+            # Run http-knocking to the nginx server
+            docker run --rm --link web1:w1 -d -p 8282:8282 http-knocking --port=8282 --target-host=w1 --target-port=80 --open-knocking="/alpha,/foxtrot,/lima"
+
+            # Wait for running servers
+            sleep 1
+
+            # Knocking
+            curl localhost:8282/alpha
+            curl localhost:8282/foxtrot
+            curl localhost:8282/lima
+
+            # Access nginx
+            curl localhost:8282
+
+workflows:
+  version: 2
+  node_tests:
+    jobs:
+      - node_10
+      - node_8
+      - node_6
+      - docker_test

@@ -1,0 +1,14 @@
+{
+  "embeds": [
+    {
+      "title": "Open",
+      "description": "{{openKnocking}}",
+      "color": 6075786
+    },
+    {
+      "title": "Close",
+      "description": "{{closeKnocking}}",
+      "color": 13369344
+    }
+  ]
+}
