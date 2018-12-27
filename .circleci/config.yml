@@ -34,10 +34,12 @@ jobs:
       - run:
           name: Working test with Docker image
           command: |
+            # Create a network
+            docker network create knocking-net
             # Run ngix server
-            docker run --name web1 --rm -d nginx:1.15-alpine
+            docker run --name=web1 --net=knocking-net --expose=80 --rm -d nginx:1.15-alpine
             # Run http-knocking to the nginx server
-            docker run --rm --link web1:w1 -d -p 8282:8282 http-knocking --port=8282 --target-host=w1 --target-port=80 --open-knocking="/alpha,/foxtrot,/lima"
+            docker run --rm --net=knocking-net -d -p 8282:8282 http-knocking --port=8282 --target-host=web1 --target-port=80 --open-knocking="/alpha,/foxtrot,/lima"
 
             # Wait for running servers
             sleep 1
