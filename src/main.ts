@@ -23,23 +23,28 @@ function unwrapUndefined<T>(value: T | undefined): T {
 const parser = yargs
   .option("port", {
     describe: 'Port of knocking server',
+    type: "number",
     demandOption: true
   })
   .option("target-host", {
     describe: 'Target host to hide',
+    type: "string",
     demandOption: true
   })
   .option("target-port", {
     describe: 'Target port to hide',
+    type: "number",
     demandOption: false,
     default: 80
   })
   .option("open-knocking", {
     describe: 'Open-knocking sequence (e.g. "/alpha,/foxtrot,/lima")',
+    type: "string",
     demandOption: false
   })
   .option("close-knocking", {
     describe: 'Close-knocking sequence (e.g. "/victor,/kilo")',
+    type: "string",
     demandOption: false
   })
   .option("enable-websocket", {
@@ -49,18 +54,22 @@ const parser = yargs
   })
   .option("auto-close-millis", {
     describe: 'Time millis to close automatically',
+    type: "number",
     demandOption: false,
   })
   .option("open-knocking-max-interval-millis", {
     describe: 'Time millis to reset open procedure',
+    type: "number",
     demandOption: false,
   })
   .option("http-request-limit", {
     describe: 'Limit of HTTP request',
+    type: "number",
     demandOption: false,
   })
   .option("on-upgrade-limit", {
     describe: 'Limit of on-upgrade (WebSocket)',
+    type: "number",
     demandOption: false,
   })
   .option("enable-fake-nginx", {
@@ -105,10 +114,12 @@ const parser = yargs
   })
   .option("webhook-url", {
     describe: 'Webhook URL used in auto knocking-update',
+    type: "string",
     demandOption: false,
   })
   .option("webhook-template-path", {
     describe: 'Webhook template file path used in auto knocking-update',
+    type: "string",
     demandOption: false,
   });
 
@@ -117,7 +128,7 @@ try {
   const args = parser.parse(process.argv);
 
   // Get server port
-  const port: string      = args['port'];
+  const port: number      = args['port'];
   // Get target host
   const targetHost: string = args['target-host'];
   // Get target port

@@ -57,18 +57,21 @@ Here is available options.
 Options:
   --help                               Show help                       [boolean]
   --version                            Show version number             [boolean]
-  --port                               Port of knocking server        [required]
-  --target-host                        Target host to hide            [required]
-  --target-port                        Target port to hide         [default: 80]
+  --port                               Port of knocking server
+                                                             [number] [required]
+  --target-host                        Target host to hide   [string] [required]
+  --target-port                        Target port to hide[number] [default: 80]
   --open-knocking                      Open-knocking sequence (e.g.
-                                       "/alpha,/foxtrot,/lima")
+                                       "/alpha,/foxtrot,/lima")         [string]
   --close-knocking                     Close-knocking sequence (e.g.
-                                       "/victor,/kilo")
+                                       "/victor,/kilo")                 [string]
   --enable-websocket                   Enable WebSocket proxy   [default: false]
   --auto-close-millis                  Time millis to close automatically
+                                                                        [number]
   --open-knocking-max-interval-millis  Time millis to reset open procedure
-  --http-request-limit                 Limit of HTTP request
-  --on-upgrade-limit                   Limit of on-upgrade (WebSocket)
+                                                                        [number]
+  --http-request-limit                 Limit of HTTP request            [number]
+  --on-upgrade-limit                   Limit of on-upgrade (WebSocket)  [number]
   --enable-fake-nginx                  Enable fake Nginx Internal Server Error
                                        response                 [default: false]
   --fake-nginx-version                 Nginx version in fake Nginx Internal
@@ -86,8 +89,9 @@ Options:
   --n-knockings                        The number of knocking sequence used in
                                        auto knocking-update         [default: 3]
   --webhook-url                        Webhook URL used in auto knocking-update
+                                                                        [string]
   --webhook-template-path              Webhook template file path used in auto
-                                       knocking-update
+                                       knocking-update                  [string]
 ```
 
  `--auto-close-millis` option makes your server more secure because it closes automatically by time.  
