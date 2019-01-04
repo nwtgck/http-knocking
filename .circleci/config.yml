@@ -8,6 +8,10 @@ ANCHORS:
      - run: npm test
      # Check whether "run build" is successful
      - run: npm run build
+     # Check whether the build of an example is successful
+     - run:
+         name: Build example
+         command: cd example && npm install && npm run build
 
 jobs:
   node_10:
