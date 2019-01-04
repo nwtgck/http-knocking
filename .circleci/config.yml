@@ -12,6 +12,9 @@ ANCHORS:
      - run:
          name: Build example
          command: cd example && npm install && npm run build
+     - run:
+         name: Run example
+         command: cd example && ! timeout -t 3 npm start
 
 jobs:
   node_10:
