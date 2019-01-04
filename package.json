@@ -1,6 +1,6 @@
 {
   "name": "http-knocking",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "HTTP knocking like port knocking",
   "keywords": [
     "http",
@@ -14,8 +14,8 @@
   "bin": {
     "http-knocking": "dist/src/main.js"
   },
-  "main": "dist/src/main.js",
-  "types": "dist/src/main.d.ts",
+  "main": "dist/src/knocking-server.js",
+  "types": "dist/src/knocking-server.d.ts",
   "scripts": {
     "test": "mocha --require ts-node/register --timeout 10000 test/*test.ts",
     "build": "tsc",
