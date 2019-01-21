@@ -170,11 +170,11 @@ export function createKnockingServer(targetHost: string,
   // Timer of openKnockingMaxIntervalMillis
   let openKnockingMaxIntervalTimer: SingleTimer = new SingleTimer();
   // Timer of auto knocking-update
-  let autoKnockingUpdateTimer: NodeJS.Timer | undefined = undefined;
+  let autoKnockingUpdateTimer: NodeJS.Timer | undefined;
   // Current HTTP request limit
-  let currHttpRequestLimit: number | undefined = undefined;
+  let currHttpRequestLimit: number | undefined;
   // Current on-upgrade limit
-  let currOnUpgradeLimit: number | undefined = undefined;
+  let currOnUpgradeLimit: number | undefined;
 
   // Set open/close indexes
   function resetIdxs(){
