@@ -19,17 +19,17 @@ ANCHORS:
 jobs:
   node_10:
     docker:
-      - image: node:10-alpine 
+      - image: circleci/node:10
     <<: *node_steps
   
   node_8:
     docker:
-      - image: node:8-alpine 
+      - image: circleci/node:8
     <<: *node_steps
   
   node_6:
     docker:
-      - image: node:6-alpine 
+      - image: circleci/node:6
     <<: *node_steps
   
   docker_test:
@@ -59,11 +59,42 @@ jobs:
             # Access nginx
             curl localhost:8282
 
+  # (from: https://circleci.com/blog/publishing-npm-packages-using-circleci-2-0/)
+  npm_publish:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run: npm install
+      - run:
+          name: Authenticate with registry
+          command: echo -e "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+      - run: npm publish
+
 workflows:
   version: 2
   node_tests:
     jobs:
-      - node_10
-      - node_8
-      - node_6
+      - node_10:
+          filters:
+            tags:
+              only: /.*/
+      - node_8:
+          filters:
+            tags:
+              only: /.*/
+      - node_6:
+          filters:
+            tags:
+              only: /.*/
       - docker_test
+      - npm_publish:
+          requires:
+            - node_10
+            - node_8
+            - node_6
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
