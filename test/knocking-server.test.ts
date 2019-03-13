@@ -29,7 +29,7 @@ async function assertKnockingServerIsOpen(knockingPort: number): Promise<void> {
   assert.equal(res.statusCode, 200);
   assert.equal(res.getBody("UTF-8"), "This is about page\n");
 
-  let ws: WebSocket | undefined = undefined;
+  let ws: WebSocket | undefined;
   try {
     ws = new WebSocket(`ws://localhost:${knockingPort}`);
     // Wait for open
@@ -620,7 +620,7 @@ describe("knockingServer", ()=>{
 
         // Connect Opened HTTP server `onUpgradeRequestLimit`-times
         for(let i = 0; i < onUpgradeRequestLimit;i ++) {
-          let ws: WebSocket | undefined = undefined;
+          let ws: WebSocket | undefined;
           try {
             ws = new WebSocket(`ws://localhost:${knockingPort}`);
             // Wait for open
