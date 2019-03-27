@@ -1,7 +1,7 @@
 # http-knocking
 
 [![NpmVersion](https://img.shields.io/npm/v/http-knocking.svg)](https://www.npmjs.com/package/http-knocking)
- [![Build Status](https://travis-ci.com/nwtgck/http-knocking.svg?branch=develop)](https://travis-ci.com/nwtgck/http-knocking) [![CircleCI](https://circleci.com/gh/nwtgck/http-knocking.svg?style=shield)](https://circleci.com/gh/nwtgck/http-knocking) [![Docker Automated build](https://img.shields.io/docker/automated/nwtgck/http-knocking.svg)](https://hub.docker.com/r/nwtgck/http-knocking/) [![](https://images.microbadger.com/badges/image/nwtgck/http-knocking.svg)](https://microbadger.com/images/nwtgck/http-knocking "Get your own image badge on microbadger.com") [![Greenkeeper badge](https://badges.greenkeeper.io/nwtgck/http-knocking.svg)](https://greenkeeper.io/)
+ [![Build Status](https://travis-ci.com/nwtgck/http-knocking.svg?branch=develop)](https://travis-ci.com/nwtgck/http-knocking) [![CircleCI](https://circleci.com/gh/nwtgck/http-knocking.svg?style=shield)](https://circleci.com/gh/nwtgck/http-knocking) [![Docker Automated build](https://img.shields.io/docker/automated/nwtgck/http-knocking.svg)](https://hub.docker.com/r/nwtgck/http-knocking/) [![](https://images.microbadger.com/badges/image/nwtgck/http-knocking.svg)](https://microbadger.com/images/nwtgck/http-knocking "Get your own image badge on microbadger.com")
 
 HTTP knocking is like port knocking. It hides your server, and allows you to open/close the server by certain knocking.   
 In HTTPS communication, knocking is hidden because of encryption unlike port knocking.
