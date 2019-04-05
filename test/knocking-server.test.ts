@@ -1001,7 +1001,7 @@ describe("knockingServer", ()=>{
 
     it("should notify a Webhook server by auto knocking-update", async ()=>{
       const knockingPort: number = await getPort();
-      const webhookPort: number = 8899;
+      const webhookPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const webhookUrl: string = `http://localhost:${webhookPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
