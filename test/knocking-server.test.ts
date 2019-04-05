@@ -7,6 +7,7 @@ import * as WebSocket from 'ws';
 import * as testUtil from './test-util';
 import * as jsonTemplates from "json-templates";
 import * as timekeeper from "timekeeper";
+import * as getPort from "get-port";
 import {PromiseHttpServer} from "promise-http-server";
 
 import * as knockingServer from '../src/knocking-server';
@@ -121,7 +122,7 @@ describe("knockingServer", ()=>{
 
 
     it("should be closed by default", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -149,7 +150,7 @@ describe("knockingServer", ()=>{
 
 
     it("should open by open-knocking sequence", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -194,7 +195,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should open by open-knocking sequence with other requests", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -237,7 +238,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should close by close-knocking sequence", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -296,7 +297,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should close by close-knocking sequence with other requests", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -349,7 +350,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should close automatically by time", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -396,7 +397,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should cancel auto-close-by-time by manual close", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -450,7 +451,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should open under open-knocking max interval", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -489,7 +490,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should close over open-knocking max interval, and open in correct way", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -537,7 +538,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should connect restricted number of HTTP requests", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -586,7 +587,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should connect restricted number of on-upgrade", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -649,7 +650,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should return fake Nginx Internal Server Error", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -759,7 +760,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should return fake Nginx Internal Server Error with padding", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -842,7 +843,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should return empty response", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -928,7 +929,7 @@ describe("knockingServer", ()=>{
 
 
     it("should update knocking sequence automatically", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const openKnockingSeq: string[] = ["/82", "/delta", "/echo"];
       const closeKnockingSeq: string[] = ["/alpha", "/one", "/one", "/three"];
@@ -999,7 +1000,7 @@ describe("knockingServer", ()=>{
     });
 
     it("should notify a Webhook server by auto knocking-update", async ()=>{
-      const knockingPort: number = 6677;
+      const knockingPort: number = await getPort();
       const webhookPort: number = 8899;
       const knockingUrl: string = `http://localhost:${knockingPort}`;
       const webhookUrl: string = `http://localhost:${webhookPort}`;
