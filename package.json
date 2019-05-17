@@ -1,6 +1,6 @@
 {
   "name": "http-knocking",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "HTTP knocking like port knocking",
   "keywords": [
     "http",
@@ -47,8 +47,9 @@
     "@types/useragent": "^2.1.1",
     "@types/websocket": "0.0.40",
     "@types/ws": "^6.0.0",
-    "@types/yargs": "^12.0.0",
+    "@types/yargs": "^13.0.0",
     "express": "^4.16.3",
+    "get-port": "^5.0.0",
     "mocha": "^6.0.1",
     "power-assert": "^1.5.0",
     "promise-http-server": "^0.1.0",
@@ -57,6 +58,6 @@
     "ts-node": "^8.0.1",
     "typescript": "^3.0.3",
     "websocket": "^1.0.26",
-    "ws": "^6.0.0"
+    "ws": "^7.0.0"
   }
 }

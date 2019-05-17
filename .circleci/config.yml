@@ -26,12 +26,7 @@ jobs:
     docker:
       - image: circleci/node:8
     <<: *node_steps
-  
-  node_6:
-    docker:
-      - image: circleci/node:6
-    <<: *node_steps
-  
+
   docker_test:
     machine: true
     steps:
@@ -83,16 +78,11 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - node_6:
-          filters:
-            tags:
-              only: /.*/
       - docker_test
       - npm_publish:
           requires:
             - node_10
             - node_8
-            - node_6
           filters:
             tags:
               only: /.*/
