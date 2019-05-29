@@ -14,14 +14,14 @@ ANCHORS:
          command: cd example && npm install && npm run build
      - run:
          name: Run example
-         command: cd example && ! timeout -t 3 npm start
+         command: cd example && ! timeout 5 npm start
 
 jobs:
   node_10:
     docker:
       - image: circleci/node:10
     <<: *node_steps
-  
+
   node_8:
     docker:
       - image: circleci/node:8
