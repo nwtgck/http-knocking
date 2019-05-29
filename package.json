@@ -29,7 +29,7 @@
     "url": "git+https://github.com/nwtgck/http-knocking.git"
   },
   "dependencies": {
-    "fakelish": "^0.2.1",
+    "fakelish": "^0.3.0",
     "http-proxy": "^1.17.0",
     "json-templates": "^2.2.0",
     "request": "^2.88.0",
