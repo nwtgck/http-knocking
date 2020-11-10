@@ -46,7 +46,7 @@
     "@types/request-promise": "^4.1.42",
     "@types/useragent": "^2.1.1",
     "@types/websocket": "0.0.40",
-    "@types/ws": "^6.0.0",
+    "@types/ws": "^7.4.0",
     "@types/yargs": "^13.0.0",
     "express": "^4.16.3",
     "get-port": "^5.0.0",
