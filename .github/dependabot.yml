@@ -1,0 +1,93 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    timezone: Asia/Tokyo
+  open-pull-requests-limit: 99
+  reviewers:
+  - nwtgck
+  assignees:
+  - nwtgck
+  ignore:
+  - dependency-name: "@types/node"
+    versions:
+    - ">= 11.a, < 12"
+  - dependency-name: "@types/node"
+    versions:
+    - ">= 12.a, < 13"
+  - dependency-name: "@types/node"
+    versions:
+    - ">= 14.a, < 15"
+  - dependency-name: "@types/node"
+    versions:
+    - 13.13.40
+    - 13.13.41
+    - 13.13.42
+    - 13.13.43
+    - 13.13.44
+    - 13.13.45
+    - 13.13.46
+    - 13.13.47
+    - 13.13.48
+    - 13.13.49
+    - 13.13.50
+    - 15.0.0
+  - dependency-name: ws
+    versions:
+    - 7.4.2
+    - 7.4.3
+    - 7.4.4
+  - dependency-name: mocha
+    versions:
+    - 8.2.1
+    - 8.3.0
+    - 8.3.1
+  - dependency-name: typescript
+    versions:
+    - 4.1.3
+    - 4.1.4
+    - 4.1.5
+    - 4.2.2
+    - 4.2.3
+  - dependency-name: "@types/mocha"
+    versions:
+    - 8.2.0
+    - 8.2.1
+  - dependency-name: websocket
+    versions:
+    - 1.0.33
+  - dependency-name: lodash
+    versions:
+    - 4.17.20
+  - dependency-name: "@types/websocket"
+    versions:
+    - 1.0.1
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: daily
+    timezone: Asia/Tokyo
+  open-pull-requests-limit: 99
+  reviewers:
+  - nwtgck
+  assignees:
+  - nwtgck
+  ignore:
+  - dependency-name: node
+    versions:
+    - "< 12, >= 11.a"
+  - dependency-name: node
+    versions:
+    - ">= 12.a, < 13"
+  - dependency-name: node
+    versions:
+    - 15.10.0.pre.alpine
+    - 15.11.0.pre.alpine
+    - 15.12.0.pre.alpine
+    - 15.13.0.pre.alpine
+    - 15.14.0.pre.alpine
+    - 15.7.0.pre.alpine
+    - 15.8.0.pre.alpine
+    - 15.9.0.pre.alpine
